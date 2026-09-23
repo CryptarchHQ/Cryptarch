@@ -13,6 +13,8 @@ def _orm_to_domain(orm: ConnectorOrm) -> Connector:
     return Connector(
         id=str(orm.id),
         tenant_id=str(orm.tenant_id),
+        name=orm.name,
+        description=orm.description,
         base_url=orm.base_url,
         auth_config=orm.auth_config,
     )
@@ -56,6 +58,8 @@ class SqlAlchemyConnectorRepository(ConnectorRepository):
     def add(self, connector: Connector) -> Connector:
         orm = ConnectorOrm(
             tenant_id=connector.tenant_id,
+            name=connector.name,
+            description=connector.description,
             base_url=connector.base_url,
             auth_config=connector.auth_config,
         )
@@ -76,6 +80,8 @@ class SqlAlchemyConnectorRepository(ConnectorRepository):
         )
         if not orm:
             return connector
+        orm.name = connector.name
+        orm.description = connector.description
         orm.base_url = connector.base_url
         orm.auth_config = connector.auth_config
         self._session.flush()

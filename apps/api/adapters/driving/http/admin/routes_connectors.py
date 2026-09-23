@@ -56,7 +56,12 @@ def create_connector(
     """Create connector in current tenant. tenant_id from JWT only."""
     repo = SqlAlchemyConnectorRepository(db)
     conn = connector_use_cases.create_connector(
-        current_user.tenant_id, body.base_url, body.auth_config, repo
+        current_user.tenant_id,
+        body.name,
+        body.base_url,
+        body.auth_config,
+        repo,
+        description=body.description,
     )
     db.commit()
     return connector_to_response(conn)
@@ -77,6 +82,8 @@ def update_connector(
         body.base_url,
         body.auth_config,
         repo,
+        name=body.name,
+        description=body.description,
     )
     if conn is None:
         db.rollback()

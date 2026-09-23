@@ -2,7 +2,7 @@
 
 import uuid
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 def _parse_uuid(value: str) -> uuid.UUID | None:
@@ -18,11 +18,15 @@ def _parse_uuid(value: str) -> uuid.UUID | None:
 
 
 class ConnectorCreateBody(BaseModel):
+    name: str = Field(min_length=1)
     base_url: str
+    description: str | None = None
     auth_config: dict | None = None
 
 
 class ConnectorUpdateBody(BaseModel):
+    name: str | None = Field(default=None, min_length=1)
+    description: str | None = None
     base_url: str | None = None
     auth_config: dict | None = None
 
@@ -38,6 +42,8 @@ def connector_to_response(connector) -> dict:
     return {
         "id": str(ci) if ci else str(getattr(connector, "id", "")),
         "tenant_id": str(ti) if ti else str(getattr(connector, "tenant_id", "")),
+        "name": connector.name,
+        "description": getattr(connector, "description", None),
         "base_url": connector.base_url,
         "auth_config": getattr(connector, "auth_config", None),
     }

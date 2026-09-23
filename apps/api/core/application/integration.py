@@ -28,15 +28,19 @@ def get_integration(
 
 def create_integration(
     tenant_id: str,
+    name: str,
     base_url: str,
     auth_config: dict | None,
     repo: IntegrationRepository,
+    description: str | None = None,
 ) -> Integration:
     integration = connector_use_cases.create_connector(
         tenant_id=tenant_id,
+        name=name,
         base_url=base_url,
         auth_config=auth_config,
         repo=repo,
+        description=description,
     )
     return Integration(**integration.__dict__)
 
@@ -47,6 +51,8 @@ def update_integration(
     base_url: str | None,
     auth_config: dict | None,
     repo: IntegrationRepository,
+    name: str | None = None,
+    description: str | None = None,
 ) -> Integration | None:
     integration = connector_use_cases.update_connector(
         connector_id=integration_id,
@@ -54,6 +60,8 @@ def update_integration(
         base_url=base_url,
         auth_config=auth_config,
         repo=repo,
+        name=name,
+        description=description,
     )
     if integration is None:
         return None

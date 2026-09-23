@@ -22,12 +22,20 @@ def get_connector(
 
 def create_connector(
     tenant_id: str,
+    name: str,
     base_url: str,
     auth_config: dict | None,
     repo: ConnectorRepository,
+    description: str | None = None,
 ) -> Connector:
     """Create connector in tenant."""
-    conn = Connector(tenant_id=tenant_id, base_url=base_url, auth_config=auth_config)
+    conn = Connector(
+        tenant_id=tenant_id,
+        name=name,
+        base_url=base_url,
+        auth_config=auth_config,
+        description=description,
+    )
     return repo.add(conn)
 
 
@@ -37,11 +45,17 @@ def update_connector(
     base_url: str | None,
     auth_config: dict | None,
     repo: ConnectorRepository,
+    name: str | None = None,
+    description: str | None = None,
 ) -> Connector | None:
     """Update connector; None if not found."""
     conn = repo.get_by_id(connector_id, tenant_id)
     if not conn:
         return None
+    if name is not None:
+        conn.name = name
+    if description is not None:
+        conn.description = description
     if base_url is not None:
         conn.base_url = base_url
     if auth_config is not None:

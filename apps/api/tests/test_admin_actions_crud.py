@@ -75,6 +75,7 @@ def connector(db_session: Session, tenant):
     c = Connector(
         id=_id(),
         tenant_id=tenant.id,
+        name="Test connector",
         base_url="https://api.example.com",
         auth_config=None,
     )
@@ -127,6 +128,7 @@ def test_list_actions_tenant_scoped(
     other_conn = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="Test connector",
         base_url="https://other.com",
         auth_config=None,
     )
@@ -169,6 +171,7 @@ def test_list_actions_filter_by_connector_id_200(
     conn2 = Connector(
         id=_id(),
         tenant_id=tenant.id,
+        name="Test connector",
         base_url="https://api2.example.com",
         auth_config=None,
     )
@@ -202,6 +205,7 @@ def test_list_actions_connector_id_other_tenant_404(
     other_conn = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="Test connector",
         base_url="https://other.com",
         auth_config=None,
     )
@@ -306,6 +310,7 @@ def test_get_action_other_tenant_404(
     other_conn = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="Test connector",
         base_url="https://other.com",
         auth_config=None,
     )
@@ -407,6 +412,7 @@ def test_create_action_connector_other_tenant_404(
     other_conn = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="Test connector",
         base_url="https://other.com",
         auth_config=None,
     )
@@ -772,6 +778,7 @@ def test_update_action_other_tenant_404(
     other_conn = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="Test connector",
         base_url="https://other.com",
         auth_config=None,
     )
@@ -832,6 +839,7 @@ def test_delete_action_other_tenant_404(
     other_conn = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="Test connector",
         base_url="https://other.com",
         auth_config=None,
     )

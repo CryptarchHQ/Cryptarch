@@ -75,6 +75,8 @@ def connector(db_session: Session, tenant):
     c = Connector(
         id=_id(),
         tenant_id=tenant.id,
+        name="api.example.com",
+        description=None,
         base_url="https://api.example.com",
         auth_config={"type": "bearer"},
     )
@@ -118,6 +120,7 @@ def test_list_connectors_tenant_scoped(
     other_c = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="other.com",
         base_url="https://other.com",
         auth_config=None,
     )
@@ -170,6 +173,8 @@ def test_get_connector_same_tenant_200(
     assert r.status_code == 200
     data = r.json()
     assert _uuid_eq(data["id"], connector.id)
+    assert data["name"] == "api.example.com"
+    assert data["description"] is None
     assert data["base_url"] == "https://api.example.com"
     assert data["auth_config"] == {"type": "bearer"}
     assert _uuid_eq(data["tenant_id"], tenant.id)
@@ -181,6 +186,7 @@ def test_get_connector_other_tenant_404(
     other_c = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="other.com",
         base_url="https://other.com",
         auth_config=None,
     )
@@ -205,14 +211,29 @@ def test_get_connector_not_found_404(client: TestClient, tenant, admin_user):
 # ----- Create -----
 
 
-def test_create_connector_201(client: TestClient, tenant, admin_user):
+def test_create_connector_without_name_422(client: TestClient, tenant, admin_user):
     r = client.post(
         "/admin/connectors",
         headers=_auth_headers(tenant.id, admin_user.id),
         json={"base_url": "https://new.example.com"},
     )
+    assert r.status_code == 422
+
+
+def test_create_connector_201(client: TestClient, tenant, admin_user):
+    r = client.post(
+        "/admin/connectors",
+        headers=_auth_headers(tenant.id, admin_user.id),
+        json={
+            "name": "Nuevo conector",
+            "description": "API de ejemplo",
+            "base_url": "https://new.example.com",
+        },
+    )
     assert r.status_code == 201
     data = r.json()
+    assert data["name"] == "Nuevo conector"
+    assert data["description"] == "API de ejemplo"
     assert data["base_url"] == "https://new.example.com"
     assert data["auth_config"] is None
     assert _uuid_eq(data["tenant_id"], tenant.id)
@@ -224,12 +245,15 @@ def test_create_connector_with_auth_config_201(client: TestClient, tenant, admin
         "/admin/connectors",
         headers=_auth_headers(tenant.id, admin_user.id),
         json={
+            "name": "OAuth API",
             "base_url": "https://api.example.com",
             "auth_config": {"type": "oauth2", "client_id": "x"},
         },
     )
     assert r.status_code == 201
     data = r.json()
+    assert data["name"] == "OAuth API"
+    assert data["description"] is None
     assert data["auth_config"] == {"type": "oauth2", "client_id": "x"}
 
 
@@ -240,10 +264,16 @@ def test_update_connector_200(client: TestClient, tenant, admin_user, connector)
     r = client.patch(
         f"/admin/connectors/{connector.id}",
         headers=_auth_headers(tenant.id, admin_user.id),
-        json={"base_url": "https://updated.example.com"},
+        json={
+            "name": "Actualizado",
+            "description": "Desc actualizada",
+            "base_url": "https://updated.example.com",
+        },
     )
     assert r.status_code == 200
     data = r.json()
+    assert data["name"] == "Actualizado"
+    assert data["description"] == "Desc actualizada"
     assert data["base_url"] == "https://updated.example.com"
 
     r2 = client.patch(
@@ -261,6 +291,7 @@ def test_update_connector_other_tenant_404(
     other_c = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="other.com",
         base_url="https://other.com",
         auth_config=None,
     )
@@ -298,6 +329,7 @@ def test_delete_connector_other_tenant_404(
     other_c = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="other.com",
         base_url="https://other.com",
         auth_config=None,
     )

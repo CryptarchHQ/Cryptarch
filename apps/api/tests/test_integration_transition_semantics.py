@@ -109,6 +109,7 @@ class _ActionRepoStub:
 def test_domain_and_orm_integration_aliases_are_backward_compatible():
     integration = Integration(
         tenant_id=_id(),
+        name="api.example.com",
         base_url="https://api.example.com",
         auth_config={"type": "bearer"},
     )
@@ -139,6 +140,7 @@ def test_integration_use_cases_reuse_connector_behavior():
 
     created = integration_use_cases.create_integration(
         tenant_id=tenant_id,
+        name="service.example.com",
         base_url="https://service.example.com",
         auth_config={"type": "api_key"},
         repo=repo,
@@ -161,7 +163,10 @@ def test_integration_action_use_cases_map_integration_id_to_connector_id():
     tenant_id = _id()
     integration = connector_repo.add(
         Connector(
-            tenant_id=tenant_id, base_url="https://api.example.com", auth_config=None
+            tenant_id=tenant_id,
+            name="api.example.com",
+            base_url="https://api.example.com",
+            auth_config=None,
         )
     )
 
