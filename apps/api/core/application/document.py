@@ -2,9 +2,20 @@
 No Session or DB in this module; ports are injected.
 """
 
+from __future__ import annotations
+
+import os
+import uuid
+from pathlib import Path
+
+from shared_contract import DOCUMENT_STATUS_ERROR, DOCUMENT_STATUS_QUEUED
+
 from core.domain.models import Document
+from core.ports.document_job_queue import DocumentJobPayload
 from core.ports.document_repository import DocumentRepository
 from core.ports.tag_repository import TagRepository
+
+ALLOWED_UPLOAD_EXTENSIONS = frozenset({".pdf", ".txt", ".csv"})
 
 
 class DocumentNotFoundError(Exception):
@@ -13,6 +24,14 @@ class DocumentNotFoundError(Exception):
 
 class TagNotFoundError(Exception):
     """Raised when one or more tag_ids do not exist or do not belong to the tenant."""
+
+
+class UnsupportedFileTypeError(Exception):
+    """Raised when the uploaded file extension is not PDF/TXT/CSV."""
+
+
+class DocumentNotRetryableError(Exception):
+    """Raised when retry is requested but document status is not error."""
 
 
 def _validate_tag_ids_in_tenant(
@@ -25,6 +44,18 @@ def _validate_tag_ids_in_tenant(
         tag = tag_repo.get_by_id(tag_id, tenant_id)
         if not tag:
             raise TagNotFoundError("Tag not found")
+
+
+def _extension_of(filename: str) -> str:
+    return Path(filename).suffix.lower()
+
+
+def _job_for(document: Document, tenant_id: str) -> DocumentJobPayload:
+    return {
+        "document_id": str(document.id),
+        "tenant_id": str(tenant_id),
+        "file_path": document.file_path or "",
+    }
 
 
 def list_documents(
@@ -61,6 +92,60 @@ def create_document(
         file_path=file_path,
     )
     return repo.add(doc, tag_ids)
+
+
+def upload_document(
+    tenant_id: str,
+    filename: str,
+    content: bytes,
+    upload_dir: str,
+    repo: DocumentRepository,
+) -> tuple[Document, DocumentJobPayload]:
+    """Persist file and create queued document. Caller must commit then enqueue the job.
+
+    Raises UnsupportedFileTypeError if extension is not PDF/TXT/CSV.
+    Does not create a document when the type is rejected.
+    """
+    ext = _extension_of(filename)
+    if ext not in ALLOWED_UPLOAD_EXTENSIONS:
+        raise UnsupportedFileTypeError(f"Unsupported file type: {ext or '(none)'}")
+
+    os.makedirs(upload_dir, exist_ok=True)
+    stored_name = f"{uuid.uuid4().hex}{ext}"
+    file_path = str(Path(upload_dir) / stored_name)
+    Path(file_path).write_bytes(content)
+
+    doc = repo.add(
+        Document(
+            tenant_id=tenant_id,
+            status=DOCUMENT_STATUS_QUEUED,
+            file_path=file_path,
+        ),
+        tag_ids=[],
+    )
+    return doc, _job_for(doc, tenant_id)
+
+
+def retry_document(
+    document_id: str,
+    tenant_id: str,
+    repo: DocumentRepository,
+) -> tuple[Document, DocumentJobPayload]:
+    """Mark errored document as queued. Caller must commit then enqueue the job.
+
+    Raises DocumentNotFoundError if missing / wrong tenant.
+    Raises DocumentNotRetryableError if status is not error.
+    Does not create a new document.
+    """
+    doc = repo.get_by_id(document_id, tenant_id)
+    if doc is None:
+        raise DocumentNotFoundError("Document not found")
+    if doc.status != DOCUMENT_STATUS_ERROR:
+        raise DocumentNotRetryableError("Document is not in error status")
+
+    doc.status = DOCUMENT_STATUS_QUEUED
+    saved = repo.save(doc, tag_ids=None)
+    return saved, _job_for(saved, tenant_id)
 
 
 def update_document(

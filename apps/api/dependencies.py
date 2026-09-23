@@ -3,7 +3,8 @@
 from typing import Annotated
 
 from adapters.driven.persistence.db import get_db
-from config import JWT_ALGORITHM, JWT_SECRET
+from config import JWT_ALGORITHM, JWT_SECRET, REDIS_URL, UPLOAD_DIR
+from core.ports.document_job_queue import DocumentJobQueue
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
@@ -13,7 +14,14 @@ from shared_contract import ROLE_ADMIN
 # So Swagger UI shows "Authorize" and sends Bearer token on every request
 _http_bearer = HTTPBearer(auto_error=False)
 
-__all__ = ["CurrentUser", "get_current_user", "get_db", "require_admin"]
+__all__ = [
+    "CurrentUser",
+    "get_current_user",
+    "get_db",
+    "get_document_job_queue",
+    "get_upload_dir",
+    "require_admin",
+]
 
 
 class CurrentUser(BaseModel):
@@ -60,3 +68,15 @@ def require_admin(
             detail="Admin role required",
         )
     return current_user
+
+
+def get_upload_dir() -> str:
+    """Directory where uploaded document files are stored (env UPLOAD_DIR)."""
+    return UPLOAD_DIR
+
+
+def get_document_job_queue() -> DocumentJobQueue:
+    """Redis-backed document job queue (overridable in tests)."""
+    from adapters.driven.queue.redis_document_job_queue import RedisDocumentJobQueue
+
+    return RedisDocumentJobQueue(REDIS_URL)
