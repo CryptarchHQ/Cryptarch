@@ -89,7 +89,12 @@ def test_effective_actions_union(db_session: Session, tenant, tags):
     db_session.add(UserTag(user_id=user.id, tag_id=tag_a.id))
     db_session.flush()
 
-    conn = Connector(id=_id(), tenant_id=tenant.id, name="Test connector", base_url="https://api.example.com")
+    conn = Connector(
+        id=_id(),
+        tenant_id=tenant.id,
+        name="Test connector",
+        base_url="https://api.example.com",
+    )
     db_session.add(conn)
     db_session.flush()
 
@@ -169,8 +174,12 @@ def test_tenant_isolation(db_session: Session, tenant, tags):
     db_session.add(UserTag(user_id=user2.id, tag_id=tag_t2.id))
     db_session.flush()
 
-    conn1 = Connector(id=_id(), tenant_id=tenant.id, name="Test connector", base_url="https://a.com")
-    conn2 = Connector(id=_id(), tenant_id=tenant2.id, name="Test connector", base_url="https://b.com")
+    conn1 = Connector(
+        id=_id(), tenant_id=tenant.id, name="Test connector", base_url="https://a.com"
+    )
+    conn2 = Connector(
+        id=_id(), tenant_id=tenant2.id, name="Test connector", base_url="https://b.com"
+    )
     db_session.add_all([conn1, conn2])
     db_session.flush()
 

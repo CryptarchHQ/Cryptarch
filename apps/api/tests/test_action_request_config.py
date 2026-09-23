@@ -89,16 +89,12 @@ def test_canonical_wins_over_legacy_when_both_present():
 
 def test_get_rejects_legacy_body_params():
     with pytest.raises(RequestConfigValidationError, match="body"):
-        validate_and_normalize_request_config(
-            "GET", {"body_params": {"k": 1}}
-        )
+        validate_and_normalize_request_config("GET", {"body_params": {"k": 1}})
 
 
 def test_delete_rejects_legacy_body_params():
     with pytest.raises(RequestConfigValidationError, match="body"):
-        validate_and_normalize_request_config(
-            "DELETE", {"body_params": {"k": 1}}
-        )
+        validate_and_normalize_request_config("DELETE", {"body_params": {"k": 1}})
 
 
 def test_canonical_optional_fields_preserved():
