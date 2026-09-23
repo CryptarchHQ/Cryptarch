@@ -18,6 +18,21 @@ class FilterUpdateBody(BaseModel):
     tag_ids: list[uuid.UUID] | None = None
 
 
+class FilterPreviewBody(BaseModel):
+    target_type: SavedFilterTarget
+    tag_ids: list[uuid.UUID] = []
+
+
+class FilterPreviewSampleResponse(BaseModel):
+    id: str
+    label: str
+
+
+class FilterPreviewResponse(BaseModel):
+    count: int
+    sample: list[FilterPreviewSampleResponse]
+
+
 def filter_to_response(
     saved_filter: "SavedFilterLike",
     tag_ids: list[str] | None = None,
