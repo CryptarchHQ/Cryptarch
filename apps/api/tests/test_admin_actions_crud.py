@@ -493,6 +493,108 @@ def test_create_action_post_with_body_in_config_201(
     assert data["request_config"]["headers"]["Content-Type"] == "application/json"
 
 
+def test_create_action_legacy_query_and_body_params_normalized_201(
+    client: TestClient, tenant, admin_user, connector
+):
+    r = client.post(
+        "/admin/actions",
+        headers=_auth_headers(tenant.id, admin_user.id),
+        json={
+            "connector_id": str(uuid.UUID(connector.id)),
+            "method": "POST",
+            "path": "/items",
+            "request_config": {
+                "query_params": {"page": "1"},
+                "body_params": {"name": "{{title}}"},
+                "timeout": 10,
+            },
+        },
+    )
+    assert r.status_code == 201
+    data = r.json()
+    assert data["request_config"] == {
+        "query": {"page": "1"},
+        "body": {"name": "{{title}}"},
+        "timeout": 10,
+    }
+    assert "query_params" not in data["request_config"]
+    assert "body_params" not in data["request_config"]
+
+    r2 = client.get(
+        f"/admin/actions/{data['id']}",
+        headers=_auth_headers(tenant.id, admin_user.id),
+    )
+    assert r2.status_code == 200
+    got = r2.json()["request_config"]
+    assert got == {
+        "query": {"page": "1"},
+        "body": {"name": "{{title}}"},
+        "timeout": 10,
+    }
+    assert "query_params" not in got
+    assert "body_params" not in got
+
+
+def test_create_action_canonical_wins_over_legacy_keys_201(
+    client: TestClient, tenant, admin_user, connector
+):
+    r = client.post(
+        "/admin/actions",
+        headers=_auth_headers(tenant.id, admin_user.id),
+        json={
+            "connector_id": str(uuid.UUID(connector.id)),
+            "method": "POST",
+            "path": "/items",
+            "request_config": {
+                "query": {"canonical": "q"},
+                "query_params": {"legacy": "q"},
+                "body": {"canonical": True},
+                "body_params": {"legacy": True},
+            },
+        },
+    )
+    assert r.status_code == 201
+    rc = r.json()["request_config"]
+    assert rc == {"query": {"canonical": "q"}, "body": {"canonical": True}}
+    assert "query_params" not in rc
+    assert "body_params" not in rc
+
+
+def test_get_action_normalizes_legacy_request_config_in_db(
+    client: TestClient, tenant, admin_user, connector, db_session: Session
+):
+    """Legacy blobs already stored must be remapped on read (API response)."""
+    action = Action(
+        id=_id(),
+        tenant_id=tenant.id,
+        connector_id=connector.id,
+        method="POST",
+        path="/legacy",
+        name="Legacy",
+        request_config={
+            "query_params": {"q": "1"},
+            "body_params": {"x": 2},
+            "auth": {"type": "none"},
+        },
+    )
+    db_session.add(action)
+    db_session.flush()
+
+    r = client.get(
+        f"/admin/actions/{action.id}",
+        headers=_auth_headers(tenant.id, admin_user.id),
+    )
+    assert r.status_code == 200
+    rc = r.json()["request_config"]
+    assert rc == {
+        "query": {"q": "1"},
+        "body": {"x": 2},
+        "auth": {"type": "none"},
+    }
+    assert "query_params" not in rc
+    assert "body_params" not in rc
+
+
 def test_create_action_invalid_input_schema_422(
     client: TestClient, tenant, admin_user, connector
 ):
