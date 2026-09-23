@@ -1,8 +1,9 @@
 # Plan técnico — Rediseño del admin v1 («de CRUD técnico a configuración guiada»)
 
 > Documento único que recoge la definición completa de las nuevas interfaces.
-> Se troceará en issues de GitHub (`CryptarchHQ/Cryptarch`, alias `C-N`) usando la sección
-> [Desglose propuesto de issues](#desglose-propuesto-de-issues).
+> El troceo ejecutable está en el milestone **Admin redesign v1** y en la cola de
+> [#27](https://github.com/CryptarchHQ/Cryptarch/issues/27). La sección
+> [Issues](#8-issues) es el mapa.
 >
 > Decisiones ya tomadas por producto (23-09-2026):
 > - **Estilo visual: Atlas** (SaaS operativo, azul acero).
@@ -255,33 +256,36 @@ Orden: **B1 + B2 (+ B3) antes de construir el wizard**; B4–B6 llegan por fases
 5. **Fase 4 — Extensiones**: test de conexión (B5, wizard OAuth2 hasta 5 pasos), wizard de permisos
    con preview (B6), accesibilidad completa (foco, aria-live, reduced-motion audit).
 
-## 8. Desglose propuesto de issues
+## 8. Issues
 
-Convenciones ya acordadas: labels `frontend` / `backend` / `bug` / `enhancement` / `blocked` /
-`priority:*`; dependencias con `Blocked by: #N` en el cuerpo; ramas `C-123-slug`;
-commits `C-123 type(scope): …`.
+El lote vive en el milestone **Admin redesign v1**. La cola y la regla de promoción están en
+[#27](https://github.com/CryptarchHQ/Cryptarch/issues/27). Una sola issue lleva `ready-for-agent`
+a la vez. Cada una es dueña de un conjunto de ficheros; el cuerpo dice qué no puede tocar.
 
-| # | Título propuesto | Labels | Bloqueada por |
-|---|---|---|---|
-| 1 | B2: alinear contrato `request_config` (canónico `headers/query/body` + migración del legado) | `backend`, `bug`, `priority:high` | — |
-| 2 | B1: añadir `name` + `description` a Connector (modelo, API, migración) | `backend`, `enhancement`, `priority:high` | — |
-| 3 | B3: tratar `input_schema_version` como string en frontend y ocultarlo de la UI | `frontend`, `bug` | — |
-| 4 | Theme Atlas: tokens CSS, tipografía y densidad | `frontend`, `enhancement` | — |
-| 5 | Componentes base: `ListPage`, `Drawer`, `FieldRow`, `Toast`, `ConfirmDialog` | `frontend`, `enhancement` | #4 |
-| 6 | Vista raíz Integraciones (list-first + panel de detalle) | `frontend`, `enhancement` | #2, #5 |
-| 7 | `WizardShell` + wizard paso 1 (servicio y autenticación, `AuthMethodCard`) | `frontend`, `enhancement` | #2, #5 |
-| 8 | Wizard paso 2 (acción, `UrlPreview`, avanzadas plegadas, contrato canónico) | `frontend`, `enhancement` | #1, #7 |
-| 9 | Wizard paso 3 (constructor de campos + `ChatFormPreview` + resumen) | `frontend`, `enhancement` | #8 |
-| 10 | Usuarios list-first con drawer | `frontend`, `enhancement` | #5 |
-| 11 | B4: endpoint de upload de fichero + encolado | `backend`, `enhancement` | — |
-| 12 | Documentos: biblioteca, drag&drop, subida en 2 pasos, estados de ingestión | `frontend`, `enhancement` | #5 (#11 para upload real) |
-| 13 | Chat: tarjetas de acciones, formulario dinámico, resultado plegado, perfil sin UUIDs | `frontend`, `enhancement` | #3, #5 |
-| 14 | Grupos y filtros v1: criterios legibles, sin IDs visibles | `frontend`, `enhancement` | #5 |
-| 15 | B5: endpoint de test de conexión de conectores | `backend`, `enhancement` | #2 |
-| 16 | Wizard OAuth2 extendido (pasos 4-5 con test de conexión) | `frontend`, `enhancement` | #7, #15 |
-| 17 | B6: endpoint de preview de filtros (conteo de coincidencias) | `backend`, `enhancement` | — |
-| 18 | Wizard de permisos con preview en vivo | `frontend`, `enhancement` | #14, #17 |
-| 19 | Auditoría de accesibilidad (foco, aria-live, reduced-motion) | `frontend`, `testing` | #6–#14 |
+| Issue | Dueña de |
+|---|---|
+| [#28](https://github.com/CryptarchHQ/Cryptarch/issues/28) | B2. Contrato canónico de `request_config` (sin Alembic, sin frontend). |
+| [#29](https://github.com/CryptarchHQ/Cryptarch/issues/29) | B1. `name` y `description` de Connector. |
+| [#30](https://github.com/CryptarchHQ/Cryptarch/issues/30) | Email y nombre de tenant en `GET /me`, para admin y para usuario de chat. |
+| [#31](https://github.com/CryptarchHQ/Cryptarch/issues/31) | Tokens Atlas del tema claro. El tema oscuro de preferencias se queda. |
+| [#33](https://github.com/CryptarchHQ/Cryptarch/issues/33) | `FieldRow`, `Drawer`, `ListPage`, `Toast`, `ConfirmDialog`. |
+| [#34](https://github.com/CryptarchHQ/Cryptarch/issues/34) | Restyle de `TagPicker` y `KeyValueEditor`, sin cambiar su API. |
+| [#35](https://github.com/CryptarchHQ/Cryptarch/issues/35) | `WizardShell` (hasta 5 pasos; el flujo normal usa 3). |
+| [#36](https://github.com/CryptarchHQ/Cryptarch/issues/36) | Navegación, perfil sin UUID y un `routes.jsx` por módulo. |
+| [#37](https://github.com/CryptarchHQ/Cryptarch/issues/37) | Paso 1 y `IntegrationServiceForm`, reutilizado por el drawer de edición. |
+| [#38](https://github.com/CryptarchHQ/Cryptarch/issues/38) | Paso 2, `UrlPreview` y el payload canónico en el cliente. |
+| [#39](https://github.com/CryptarchHQ/Cryptarch/issues/39) | Paso 3, alta, ruta `/new` y B3 (`input_schema_version` string, oculto). |
+| [#40](https://github.com/CryptarchHQ/Cryptarch/issues/40) | Vista Integraciones y retirada de `ConnectorsWorkspace` / `ActionBuilderForm`. |
+| [#41](https://github.com/CryptarchHQ/Cryptarch/issues/41) | Usuarios list-first, incluido «guardar como filtro». |
+| [#42](https://github.com/CryptarchHQ/Cryptarch/issues/42) | Grupos y filtros v1. Deja el hueco `headerActions` vacío. |
+| [#43](https://github.com/CryptarchHQ/Cryptarch/issues/43) | Chat. No cambia las props de `DynamicActionForm` ni el perfil. |
+| [#44](https://github.com/CryptarchHQ/Cryptarch/issues/44) | B4. Upload multipart y reintento de ingestión. |
+| [#45](https://github.com/CryptarchHQ/Cryptarch/issues/45) | Biblioteca de documentos y subida en dos pasos. |
+| [#46](https://github.com/CryptarchHQ/Cryptarch/issues/46) | B5. Test de conexión, sin secretos en la respuesta. |
+| [#47](https://github.com/CryptarchHQ/Cryptarch/issues/47) | Pasos 4 y 5, solo si la auth es OAuth2. |
+| [#32](https://github.com/CryptarchHQ/Cryptarch/issues/32) | B6. Preview de coincidencias de un filtro. |
+| [#48](https://github.com/CryptarchHQ/Cryptarch/issues/48) | Wizard de permisos. Solo rellena `headerActions`. |
 
-Los números son relativos a este plan; al crear los issues reales se sustituyen por los `#N` de
-GitHub y se enlazan entre sí.
+La accesibilidad (foco, `aria-live`, `prefers-reduced-motion`, cero `window.alert`) va en los
+criterios de cada issue de UI. Tags queda fuera y tiene que seguir funcionando. La primera de la
+cola es [#28](https://github.com/CryptarchHQ/Cryptarch/issues/28).
