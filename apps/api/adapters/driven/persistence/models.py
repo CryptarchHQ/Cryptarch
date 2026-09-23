@@ -6,7 +6,7 @@ These are the concrete database models. Domain entities live in
 
 import uuid
 
-from sqlalchemy import Column, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import declarative_base
 
@@ -108,6 +108,8 @@ class ConnectorOrm(Base):
     tenant_id = Column(
         UUID(as_uuid=False), ForeignKey("tenants.id"), nullable=False, index=True
     )
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
     base_url = Column(String(2048), nullable=False)
     auth_config = Column(JSONB, nullable=True)
 

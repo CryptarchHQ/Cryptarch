@@ -19,3 +19,9 @@ DATABASE_URL_TEST = os.environ.get(
 )
 JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret-change-in-production")
 JWT_ALGORITHM = "HS256"
+
+# Local filesystem for uploaded documents (worker reads via file_path).
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/tmp/cryptarch-uploads")
+
+# Redis used by document job queue (API enqueue; worker consumes later).
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")

@@ -3,6 +3,7 @@
 import uuid
 from typing import Any, Protocol
 
+from core.domain.action_request_config import normalize_request_config_shape
 from pydantic import BaseModel
 
 
@@ -41,7 +42,7 @@ def action_to_response(
         "method": action.method,
         "path": action.path,
         "name": action.name,
-        "request_config": action.request_config,
+        "request_config": normalize_request_config_shape(action.request_config),
         "input_schema_json": action.input_schema_json,
         "input_schema_version": action.input_schema_version,
         "tag_ids": tag_ids,

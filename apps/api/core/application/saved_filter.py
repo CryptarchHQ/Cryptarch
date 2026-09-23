@@ -4,8 +4,11 @@ No Session or DB in this module; ports are injected.
 """
 
 from core.domain.models import SavedFilter
+from core.ports.filter_preview import FilterPreviewPort, FilterPreviewResult
 from core.ports.saved_filter_repository import SavedFilterRepository
 from core.ports.tag_repository import TagRepository
+
+SAMPLE_LIMIT = 5
 
 
 class FilterNotFoundError(Exception):
@@ -26,6 +29,24 @@ def _validate_tag_ids_in_tenant(
         tag = tag_repo.get_by_id(tag_id, tenant_id)
         if not tag:
             raise TagNotFoundError("Tag not found")
+
+
+def preview_filter(
+    tenant_id: str,
+    target_type: str,
+    tag_ids: list[str],
+    tag_repo: TagRepository,
+    preview_port: FilterPreviewPort,
+) -> FilterPreviewResult:
+    """Count/sample entities matching tag AND semantics. Does not persist.
+
+    Raises TagNotFoundError if any tag_id is missing or outside the tenant.
+    Empty tag_ids means no restriction (all entities of that type in tenant).
+    """
+    _validate_tag_ids_in_tenant(tag_ids, tenant_id, tag_repo)
+    return preview_port.preview(
+        tenant_id, target_type, tag_ids, sample_limit=SAMPLE_LIMIT
+    )
 
 
 def list_filters(

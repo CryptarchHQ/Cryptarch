@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from core.application import connector as connector_use_cases
+from core.application import connector_probe as connector_probe_use_cases
 from core.application.connector import ConnectorHasActionsError
 from dependencies import CurrentUser, get_db, require_admin
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,6 +14,7 @@ from adapters.driven.persistence.connector_repository import (
 )
 from adapters.driving.schemas.connector import (
     ConnectorCreateBody,
+    ConnectorTestResponse,
     ConnectorUpdateBody,
     connector_to_response,
 )
@@ -56,7 +58,12 @@ def create_connector(
     """Create connector in current tenant. tenant_id from JWT only."""
     repo = SqlAlchemyConnectorRepository(db)
     conn = connector_use_cases.create_connector(
-        current_user.tenant_id, body.base_url, body.auth_config, repo
+        current_user.tenant_id,
+        body.name,
+        body.base_url,
+        body.auth_config,
+        repo,
+        description=body.description,
     )
     db.commit()
     return connector_to_response(conn)
@@ -77,6 +84,8 @@ def update_connector(
         body.base_url,
         body.auth_config,
         repo,
+        name=body.name,
+        description=body.description,
     )
     if conn is None:
         db.rollback()
@@ -112,3 +121,21 @@ def delete_connector(
         )
     db.commit()
     return None
+
+
+@router.post("/connectors/{connector_id}/test", response_model=ConnectorTestResponse)
+def test_connector(
+    connector_id: str,
+    current_user: Annotated[CurrentUser, Depends(require_admin)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Probe connector auth against base_url (or oauth2 token_url). Never returns secrets."""
+    repo = SqlAlchemyConnectorRepository(db)
+    result = connector_probe_use_cases.probe_connector_auth(
+        connector_id, current_user.tenant_id, repo
+    )
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Connector not found"
+        )
+    return ConnectorTestResponse(ok=result.ok, detail=result.detail)

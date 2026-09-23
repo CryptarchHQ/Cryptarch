@@ -10,6 +10,8 @@
 - Enforce tenant checks server-side
 - Keep connector credentials separate from action definitions
 - Keep admin endpoints inaccessible to normal users
+- Connector probe `POST /admin/connectors/{id}/test` issues an outbound request to `base_url` (or OAuth `token_url`), http/https only; response must not include secrets
+- Uploaded files are stored on local disk (`UPLOAD_DIR`)
 
 ## Future hardening
 - Outbound host allow-list for connectors

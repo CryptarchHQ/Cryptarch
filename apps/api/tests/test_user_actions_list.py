@@ -103,6 +103,7 @@ def test_user_sees_only_permitted_actions(
     conn = Connector(
         id=_id(),
         tenant_id=tenant.id,
+        name="Test connector",
         base_url="https://api.example.com",
     )
     db_session.add(conn)
@@ -196,6 +197,7 @@ def test_admin_user_sees_only_permitted_actions(
     conn = Connector(
         id=_id(),
         tenant_id=tenant.id,
+        name="Test connector",
         base_url="https://api.example.com",
     )
     db_session.add(conn)
@@ -266,11 +268,13 @@ def test_cross_tenant_not_returned(
     conn1 = Connector(
         id=_id(),
         tenant_id=tenant.id,
+        name="Test connector",
         base_url="https://a.com",
     )
     conn2 = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="Test connector",
         base_url="https://b.com",
     )
     db_session.add_all([conn1, conn2])
@@ -341,6 +345,7 @@ def test_response_does_not_expose_request_config_or_credentials(
     conn = Connector(
         id=_id(),
         tenant_id=tenant.id,
+        name="Test connector",
         base_url="https://api.example.com",
         auth_config=secret_cfg,
     )

@@ -49,7 +49,9 @@ class Group:
 class Connector:
     tenant_id: str
     base_url: str
+    name: str
     auth_config: dict[str, Any] | None = None
+    description: str | None = None
     id: str | None = None
 
 

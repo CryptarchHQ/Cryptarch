@@ -133,6 +133,7 @@ def test_execute_success_stub(client: TestClient, tenant, db_session: Session):
     conn = Connector(
         id=_id(),
         tenant_id=tenant.id,
+        name="Test connector",
         base_url="https://api.example.com",
         auth_config={"Authorization": "Bearer SECRET"},
     )
@@ -199,6 +200,7 @@ def test_execute_forbidden_without_permission(
     conn = Connector(
         id=_id(),
         tenant_id=tenant.id,
+        name="Test connector",
         base_url="https://api.example.com",
     )
     db_session.add(conn)
@@ -245,6 +247,7 @@ def test_execute_cross_tenant_blocked(
     conn_other = Connector(
         id=_id(),
         tenant_id=other_tenant.id,
+        name="Test connector",
         base_url="https://other.com",
     )
     db_session.add(conn_other)
@@ -290,6 +293,7 @@ def test_execute_invalid_payload_missing_required(
     conn = Connector(
         id=_id(),
         tenant_id=tenant.id,
+        name="Test connector",
         base_url="https://api.example.com",
     )
     db_session.add(conn)
@@ -342,6 +346,7 @@ def test_execute_invalid_payload_wrong_type(
     conn = Connector(
         id=_id(),
         tenant_id=tenant.id,
+        name="Test connector",
         base_url="https://api.example.com",
     )
     db_session.add(conn)

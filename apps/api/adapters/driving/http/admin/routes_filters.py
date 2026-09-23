@@ -8,12 +8,16 @@ from dependencies import CurrentUser, get_db, require_admin
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from adapters.driven.persistence.filter_preview import FilterPreviewImpl
 from adapters.driven.persistence.saved_filter_repository import (
     SavedFilterRepositoryImpl,
 )
 from adapters.driven.persistence.tag_repository import SqlAlchemyTagRepository
 from adapters.driving.schemas.saved_filter import (
     FilterCreateBody,
+    FilterPreviewBody,
+    FilterPreviewResponse,
+    FilterPreviewSampleResponse,
     FilterUpdateBody,
     filter_to_response,
 )
@@ -24,6 +28,38 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 def _tag_ids_to_str(tag_ids: list) -> list[str]:
     """Convert list of UUID to canonical string list."""
     return [str(t) for t in tag_ids]
+
+
+@router.post("/filters/preview", response_model=FilterPreviewResponse)
+def preview_filter(
+    body: FilterPreviewBody,
+    current_user: Annotated[CurrentUser, Depends(require_admin)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Count entities matching tag AND semantics for the current tenant. Does not persist."""
+    tag_repo = SqlAlchemyTagRepository(db)
+    preview_port = FilterPreviewImpl(db)
+    tag_ids_str = _tag_ids_to_str(body.tag_ids)
+    try:
+        result = saved_filter_use_cases.preview_filter(
+            current_user.tenant_id,
+            body.target_type.value,
+            tag_ids_str,
+            tag_repo,
+            preview_port,
+        )
+    except TagNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tag not found",
+        )
+    return FilterPreviewResponse(
+        count=result.count,
+        sample=[
+            FilterPreviewSampleResponse(id=item.id, label=item.label)
+            for item in result.sample
+        ],
+    )
 
 
 @router.get("/filters")
