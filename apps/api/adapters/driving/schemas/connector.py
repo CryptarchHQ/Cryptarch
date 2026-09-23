@@ -31,6 +31,11 @@ class ConnectorUpdateBody(BaseModel):
     auth_config: dict | None = None
 
 
+class ConnectorTestResponse(BaseModel):
+    ok: bool
+    detail: str
+
+
 def connector_to_response(connector) -> dict:
     """Serialize Connector to response dict. id and tenant_id in canonical form."""
     ci = _parse_uuid(str(connector.id)) if getattr(connector, "id", None) else None

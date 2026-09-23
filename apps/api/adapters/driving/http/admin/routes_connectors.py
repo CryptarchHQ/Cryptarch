@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from core.application import connector as connector_use_cases
+from core.application import connector_test as connector_test_use_cases
 from core.application.connector import ConnectorHasActionsError
 from dependencies import CurrentUser, get_db, require_admin
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,6 +14,7 @@ from adapters.driven.persistence.connector_repository import (
 )
 from adapters.driving.schemas.connector import (
     ConnectorCreateBody,
+    ConnectorTestResponse,
     ConnectorUpdateBody,
     connector_to_response,
 )
@@ -119,3 +121,21 @@ def delete_connector(
         )
     db.commit()
     return None
+
+
+@router.post("/connectors/{connector_id}/test", response_model=ConnectorTestResponse)
+def test_connector(
+    connector_id: str,
+    current_user: Annotated[CurrentUser, Depends(require_admin)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Probe connector auth against base_url (or oauth2 token_url). Never returns secrets."""
+    repo = SqlAlchemyConnectorRepository(db)
+    result = connector_test_use_cases.test_connector_auth(
+        connector_id, current_user.tenant_id, repo
+    )
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Connector not found"
+        )
+    return ConnectorTestResponse(ok=result.ok, detail=result.detail)
