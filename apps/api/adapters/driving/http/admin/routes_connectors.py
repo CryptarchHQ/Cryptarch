@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from core.application import connector as connector_use_cases
-from core.application import connector_test as connector_test_use_cases
+from core.application import connector_probe as connector_probe_use_cases
 from core.application.connector import ConnectorHasActionsError
 from dependencies import CurrentUser, get_db, require_admin
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -131,7 +131,7 @@ def test_connector(
 ):
     """Probe connector auth against base_url (or oauth2 token_url). Never returns secrets."""
     repo = SqlAlchemyConnectorRepository(db)
-    result = connector_test_use_cases.test_connector_auth(
+    result = connector_probe_use_cases.probe_connector_auth(
         connector_id, current_user.tenant_id, repo
     )
     if result is None:

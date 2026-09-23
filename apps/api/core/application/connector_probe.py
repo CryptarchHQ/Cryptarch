@@ -44,6 +44,10 @@ def _sanitize_detail(detail: str, secrets: list[str]) -> str:
     return out
 
 
+def _is_http_url(url: str) -> bool:
+    return url.startswith("http://") or url.startswith("https://")
+
+
 def _build_request(
     connector: Connector,
     environ: Mapping[str, str],
@@ -144,7 +148,7 @@ def _probe(
     )
 
 
-def test_connector_auth(
+def probe_connector_auth(
     connector_id: str,
     tenant_id: str,
     repo: ConnectorRepository,
@@ -167,5 +171,11 @@ def test_connector_auth(
         )
     except ValueError as exc:
         return ConnectorAuthTestResult(ok=False, detail=str(exc))
+
+    if not _is_http_url(url):
+        return ConnectorAuthTestResult(
+            ok=False,
+            detail="URL must start with http:// or https://",
+        )
 
     return _probe(method, url, headers, data, basic, secrets)

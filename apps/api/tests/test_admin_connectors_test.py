@@ -106,7 +106,7 @@ def test_connector_test_null_auth_reaches_ok(
     mock_client.__exit__ = MagicMock(return_value=False)
     mock_client.request.return_value = _mock_response(401)
     monkeypatch.setattr(
-        "core.application.connector_test.httpx.Client",
+        "core.application.connector_probe.httpx.Client",
         lambda **kwargs: mock_client,
     )
 
@@ -147,7 +147,7 @@ def test_connector_test_missing_env_var_ok_false(
 
     request_spy = MagicMock()
     monkeypatch.setattr(
-        "core.application.connector_test.httpx.Client",
+        "core.application.connector_probe.httpx.Client",
         lambda **kwargs: request_spy,
     )
 
@@ -182,7 +182,7 @@ def test_connector_test_remote_failure_ok_false(
     mock_client.__exit__ = MagicMock(return_value=False)
     mock_client.request.side_effect = httpx.ConnectError("connection refused")
     monkeypatch.setattr(
-        "core.application.connector_test.httpx.Client",
+        "core.application.connector_probe.httpx.Client",
         lambda **kwargs: mock_client,
     )
 
@@ -239,7 +239,7 @@ def test_connector_test_bearer_secret_not_in_response(
     mock_client.__exit__ = MagicMock(return_value=False)
     mock_client.request.return_value = _mock_response(200)
     monkeypatch.setattr(
-        "core.application.connector_test.httpx.Client",
+        "core.application.connector_probe.httpx.Client",
         lambda **kwargs: mock_client,
     )
 
@@ -286,3 +286,116 @@ def test_connector_test_oauth2_missing_token_url(
     assert body["ok"] is False
     assert "token_url" in body["detail"].lower()
     assert "oauth-secret" not in body["detail"]
+
+
+def test_connector_test_non_http_url_ok_false_no_httpx(
+    client: TestClient, tenant, admin_user, db_session: Session, monkeypatch
+):
+    c = Connector(
+        id=_id(),
+        tenant_id=tenant.id,
+        name="ftp-base",
+        base_url="ftp://files.example.com",
+        auth_config=None,
+    )
+    db_session.add(c)
+    db_session.flush()
+
+    client_factory = MagicMock()
+    monkeypatch.setattr(
+        "core.application.connector_probe.httpx.Client",
+        client_factory,
+    )
+
+    r = client.post(
+        f"/admin/connectors/{c.id}/test",
+        headers=_auth_headers(tenant.id, admin_user.id),
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is False
+    assert "http://" in body["detail"] or "https://" in body["detail"]
+    client_factory.assert_not_called()
+
+
+def test_connector_test_api_key_header_and_secret_not_in_response(
+    client: TestClient, tenant, admin_user, db_session: Session, monkeypatch
+):
+    env_name = "CRYPTARCH_TEST_API_KEY"
+    secret_value = "api-key-secret-value-abc"
+    monkeypatch.setenv(env_name, secret_value)
+
+    c = Connector(
+        id=_id(),
+        tenant_id=tenant.id,
+        name="api-key-ok",
+        base_url="https://api.example.com",
+        auth_config={
+            "type": "api_key",
+            "key_env": env_name,
+            "header_name": "X-Custom-Key",
+        },
+    )
+    db_session.add(c)
+    db_session.flush()
+
+    mock_client = MagicMock()
+    mock_client.__enter__ = MagicMock(return_value=mock_client)
+    mock_client.__exit__ = MagicMock(return_value=False)
+    mock_client.request.return_value = _mock_response(200)
+    monkeypatch.setattr(
+        "core.application.connector_probe.httpx.Client",
+        lambda **kwargs: mock_client,
+    )
+
+    r = client.post(
+        f"/admin/connectors/{c.id}/test",
+        headers=_auth_headers(tenant.id, admin_user.id),
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is True
+    assert secret_value not in body["detail"]
+    assert secret_value not in r.text
+    headers = mock_client.request.call_args[1].get("headers") or {}
+    assert headers.get("X-Custom-Key") == secret_value
+    assert "Authorization" not in headers
+
+
+def test_connector_test_api_key_default_header_name(
+    client: TestClient, tenant, admin_user, db_session: Session, monkeypatch
+):
+    env_name = "CRYPTARCH_TEST_API_KEY_DEFAULT"
+    secret_value = "default-api-key-secret-xyz"
+    monkeypatch.setenv(env_name, secret_value)
+
+    c = Connector(
+        id=_id(),
+        tenant_id=tenant.id,
+        name="api-key-default",
+        base_url="https://api.example.com",
+        auth_config={"type": "api_key", "key_env": env_name},
+    )
+    db_session.add(c)
+    db_session.flush()
+
+    mock_client = MagicMock()
+    mock_client.__enter__ = MagicMock(return_value=mock_client)
+    mock_client.__exit__ = MagicMock(return_value=False)
+    mock_client.request.return_value = _mock_response(200)
+    monkeypatch.setattr(
+        "core.application.connector_probe.httpx.Client",
+        lambda **kwargs: mock_client,
+    )
+
+    r = client.post(
+        f"/admin/connectors/{c.id}/test",
+        headers=_auth_headers(tenant.id, admin_user.id),
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is True
+    assert secret_value not in body["detail"]
+    assert secret_value not in r.text
+    headers = mock_client.request.call_args[1].get("headers") or {}
+    assert headers.get("X-API-Key") == secret_value

@@ -44,7 +44,7 @@ Port: `core/ports/tag_repository.py` (ya existe).
 - `core/application/saved_filter.py` — list, get, create, update, delete (SavedFilterRepository; validar tag_ids en tenant en app o en repo).
 - `adapters/driven/persistence/saved_filter_repository.py` — implementa `core.ports.saved_filter_repository.SavedFilterRepository` (incl. SavedFilterTag).
 - `adapters/driving/schemas/saved_filter.py` — FilterCreateBody, FilterUpdateBody, filter_to_response (con tag_ids).
-- `adapters/driving/http/admin/routes_filters.py` — endpoints `/admin/filters` y `/admin/filters/{filter_id}`.
+- `adapters/driving/http/admin/routes_filters.py` — endpoints `/admin/filters` y `/admin/filters/{filter_id}`; `POST /admin/filters/preview`.
 
 Port: `core/ports/saved_filter_repository.py` (ya existe).
 
@@ -66,9 +66,10 @@ Port: `core/ports/group_repository.py` (ya existe).
 
 **Ficheros:**
 - `core/application/connector.py` — list, get, create, update, delete (ConnectorRepository; delete comprobar has_actions → 409).
+- `core/application/connector_probe.py` — probe_connector_auth (http/https only; no secrets in result).
 - `adapters/driven/persistence/connector_repository.py` — implementa `core.ports.connector_repository.ConnectorRepository`.
 - `adapters/driving/schemas/connector.py` — ConnectorCreateBody, ConnectorUpdateBody, connector_to_response.
-- `adapters/driving/http/admin/routes_connectors.py` — endpoints `/admin/connectors` y `/admin/connectors/{connector_id}`.
+- `adapters/driving/http/admin/routes_connectors.py` — endpoints `/admin/connectors`, `/admin/connectors/{connector_id}`, `POST /admin/connectors/{id}/test`.
 
 Port: `core.ports/connector_repository.py` (ya existe).
 
@@ -89,10 +90,10 @@ Port: `core/ports/action_repository.py` (ya existe). Depende de ConnectorReposit
 ## 7. Document
 
 **Ficheros:**
-- `core/application/document.py` — list, get, create, update, delete (DocumentRepository; validar tag_ids en tenant).
+- `core/application/document.py` — list, get, create, update, delete, upload, retry (DocumentRepository; validar tag_ids en tenant).
 - `adapters/driven/persistence/document_repository.py` — implementa `core.ports.document_repository.DocumentRepository` (incl. DocumentTag).
 - `adapters/driving/schemas/document.py` — DocumentCreateBody, DocumentUpdateBody, document_to_response (tag_ids).
-- `adapters/driving/http/admin/routes_documents.py` — endpoints `/admin/documents` y `/admin/documents/{document_id}`.
+- `adapters/driving/http/admin/routes_documents.py` — endpoints `/admin/documents`, `/admin/documents/{document_id}`, `POST /admin/documents/upload`, `POST /admin/documents/{id}/retry`.
 
 Port: `core/ports/document_repository.py` (ya existe).
 
@@ -115,6 +116,7 @@ Ports: `core/ports/user_repository.py`, `core/ports/password_hasher.py` (ya exis
 **Ficheros:**
 - `adapters/driving/http/admin/__init__.py` — opcional.
 - `adapters/driving/http/admin/routes.py` — **único** router admin que incluye: routes_users, routes_tags, routes_filters, routes_groups, routes_connectors, routes_actions, routes_documents; y endpoint GET /admin/me (current user info).
+- `GET /me` (no `/admin/me`) — perfil de sesión para cualquier autenticado (email, tenant_name, role, sub).
 - `main.py` — importar router admin desde `adapters.driving.http.admin.routes`, router auth desde `adapters.driving.http.auth.routes`; incluir ambos; health en main.
 - `dependencies.py` — si hace falta: factories `get_user_repository(db)`, etc., o un único provider de repos para inyectar en routers. get_db ya viene de `adapters.driven.persistence.db`.
 

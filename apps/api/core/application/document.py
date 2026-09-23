@@ -115,14 +115,18 @@ def upload_document(
     file_path = str(Path(upload_dir) / stored_name)
     Path(file_path).write_bytes(content)
 
-    doc = repo.add(
-        Document(
-            tenant_id=tenant_id,
-            status=DOCUMENT_STATUS_QUEUED,
-            file_path=file_path,
-        ),
-        tag_ids=[],
-    )
+    try:
+        doc = repo.add(
+            Document(
+                tenant_id=tenant_id,
+                status=DOCUMENT_STATUS_QUEUED,
+                file_path=file_path,
+            ),
+            tag_ids=[],
+        )
+    except Exception:
+        Path(file_path).unlink(missing_ok=True)
+        raise
     return doc, _job_for(doc, tenant_id)
 
 

@@ -74,6 +74,20 @@ def admin_user(db_session: Session, tenant):
 
 
 @pytest.fixture
+def normal_user(db_session: Session, tenant):
+    u = User(
+        id=_id(),
+        tenant_id=tenant.id,
+        email="user-upload@acme.com",
+        role="user",
+        password_hash=hash_password("secret"),
+    )
+    db_session.add(u)
+    db_session.flush()
+    return u
+
+
+@pytest.fixture
 def upload_dir(tmp_path: Path) -> Path:
     d = tmp_path / "uploads"
     d.mkdir()
@@ -114,6 +128,25 @@ def test_upload_rejects_unsupported_extension_422_no_document(
         files={"file": ("notes.docx", b"fake", "application/octet-stream")},
     )
     assert r.status_code == 422
+    assert fake_queue.jobs == []
+    assert (
+        db_session.query(Document).filter(Document.tenant_id == tenant.id).count() == 0
+    )
+
+
+def test_upload_non_admin_403(
+    client: TestClient,
+    tenant,
+    normal_user,
+    fake_queue: FakeDocumentJobQueue,
+    db_session: Session,
+):
+    r = client.post(
+        "/admin/documents/upload",
+        headers=_auth_headers(tenant.id, normal_user.id, role="user"),
+        files={"file": ("report.pdf", b"%PDF-1.4", "application/pdf")},
+    )
+    assert r.status_code == 403
     assert fake_queue.jobs == []
     assert (
         db_session.query(Document).filter(Document.tenant_id == tenant.id).count() == 0

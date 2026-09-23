@@ -1,5 +1,6 @@
 """Admin HTTP routes for Documents. Uses core.application.document and DocumentRepository + TagRepository."""
 
+from pathlib import Path
 from typing import Annotated
 
 from core.application import document as document_use_cases
@@ -108,6 +109,7 @@ async def upload_document(
     filename = file.filename or ""
     content = await file.read()
     repo = SqlAlchemyDocumentRepository(db)
+    file_path_written: str | None = None
     try:
         doc, job = document_use_cases.upload_document(
             current_user.tenant_id,
@@ -116,6 +118,7 @@ async def upload_document(
             upload_dir,
             repo,
         )
+        file_path_written = doc.file_path
         db.commit()
     except UnsupportedFileTypeError as exc:
         db.rollback()
@@ -123,6 +126,11 @@ async def upload_document(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         ) from exc
+    except Exception:
+        db.rollback()
+        if file_path_written:
+            Path(file_path_written).unlink(missing_ok=True)
+        raise
     queue.enqueue(job)
     return document_to_response(doc, tag_ids=[])
 
