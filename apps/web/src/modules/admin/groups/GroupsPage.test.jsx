@@ -133,7 +133,10 @@ describe("GroupsPage", () => {
 
     fetch.mockImplementation((url, options = {}) => {
       const path = String(url).replace("http://localhost:8000", "");
-      if (path === "/admin/groups" && (!options.method || options.method === "GET")) {
+      if (
+        path === "/admin/groups" &&
+        (!options.method || options.method === "GET")
+      ) {
         return mockJsonResponse(200, [
           {
             id: GROUP_ID,
@@ -219,9 +222,7 @@ describe("GroupsPage", () => {
     mockEmptyLists();
     renderGroupsPage();
 
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Nuevo grupo" }),
-    );
+    fireEvent.click(await screen.findByRole("button", { name: "Nuevo grupo" }));
 
     expect(
       await screen.findByText(

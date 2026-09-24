@@ -122,10 +122,7 @@ function FilterIdPicker({
             const inputId = `${id}-${fid}`;
             return (
               <li key={fid} className="groups-page__filter-item">
-                <label
-                  htmlFor={inputId}
-                  className="groups-page__filter-option"
-                >
+                <label htmlFor={inputId} className="groups-page__filter-option">
                   <input
                     id={inputId}
                     type="checkbox"
