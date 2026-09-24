@@ -35,16 +35,22 @@ function filtersById(filters) {
   return index;
 }
 
+function joinTagNames(names) {
+  if (names.length <= 1) return names[0] || "";
+  if (names.length === 2) return `${names[0]} y ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+}
+
 function formatCriterion(tagIds, tagIndex) {
   const ids = Array.isArray(tagIds) ? tagIds : [];
   const names = ids.map((id) => tagIndex.get(String(id))).filter(Boolean);
-  if (names.length === 0) return "tiene TODAS: —";
-  return `tiene TODAS: ${names.join(", ")}`;
+  if (names.length === 0) return "sin etiquetas";
+  return `tiene ${joinTagNames(names)}`;
 }
 
-function filterOptionLabel(filter, tagIndex) {
+function filterDisplayLabel(filter, tagIndex) {
   const name = filter?.name || "filtro";
-  return `${name} — ${formatCriterion(filter?.tag_ids, tagIndex)}`;
+  return `${name} · ${formatCriterion(filter?.tag_ids, tagIndex)}`;
 }
 
 function summarizeFilterIds(filterIds, filterIndex, tagIndex) {
@@ -81,6 +87,57 @@ function groupSummary(group, filterIndex, tagIndex) {
 
 function formsEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+const FILTER_SIDE_HINT =
+  "Varios son alternativas (OR). Si no marcas ninguno, este lado no concede nada.";
+
+function FilterIdPicker({
+  id,
+  label,
+  filters,
+  selectedIds,
+  tagIndex,
+  emptyMessage,
+  onToggle,
+}) {
+  const selected = new Set((selectedIds || []).map(String));
+
+  return (
+    <FieldRow label={label} htmlFor={id} hint={FILTER_SIDE_HINT}>
+      {filters.length === 0 ? (
+        <p id={id} className="groups-page__filter-empty">
+          {emptyMessage}
+        </p>
+      ) : (
+        <ul
+          id={id}
+          className="groups-page__filter-list"
+          role="group"
+          aria-label={label}
+        >
+          {filters.map((filter) => {
+            const fid = String(filter.id);
+            const checked = selected.has(fid);
+            const inputId = `${id}-${fid}`;
+            return (
+              <li key={fid} className="groups-page__filter-item">
+                <label htmlFor={inputId} className="groups-page__filter-option">
+                  <input
+                    id={inputId}
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => onToggle(filter.id)}
+                  />
+                  <span>{filterDisplayLabel(filter, tagIndex)}</span>
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </FieldRow>
+  );
 }
 
 export function GroupsPage({ headerActions = null } = {}) {
@@ -201,11 +258,16 @@ export function GroupsPage({ headerActions = null } = {}) {
     setFormError(null);
   }
 
-  function onMultiSelectChange(fieldName, event) {
-    const next = Array.from(event.target.selectedOptions).map(
-      (option) => option.value,
-    );
-    setForm((prev) => ({ ...prev, [fieldName]: next }));
+  function toggleFilterId(fieldName, filterId) {
+    const sid = String(filterId);
+    setForm((prev) => {
+      const current = Array.isArray(prev[fieldName]) ? prev[fieldName] : [];
+      const has = current.some((id) => String(id) === sid);
+      const next = has
+        ? current.filter((id) => String(id) !== sid)
+        : [...current, filterId];
+      return { ...prev, [fieldName]: next };
+    });
   }
 
   async function onSaveGroup(event) {
@@ -349,65 +411,39 @@ export function GroupsPage({ headerActions = null } = {}) {
             />
           </FieldRow>
 
-          <FieldRow
+          <FilterIdPicker
+            id="groups-page-user-filters"
             label="Filtros de usuarios"
-            htmlFor="groups-page-user-filters"
-          >
-            <select
-              id="groups-page-user-filters"
-              multiple
-              value={form.user_filter_ids.map(String)}
-              onChange={(event) =>
-                onMultiSelectChange("user_filter_ids", event)
-              }
-            >
-              {filtersByType.user.map((filter) => (
-                <option key={filter.id} value={filter.id}>
-                  {filterOptionLabel(filter, tagIndex)}
-                </option>
-              ))}
-            </select>
-          </FieldRow>
+            filters={filtersByType.user}
+            selectedIds={form.user_filter_ids}
+            tagIndex={tagIndex}
+            emptyMessage="No hay filtros de usuarios. Créalos en Filtros."
+            onToggle={(filterId) => toggleFilterId("user_filter_ids", filterId)}
+          />
 
-          <FieldRow
+          <FilterIdPicker
+            id="groups-page-action-filters"
             label="Filtros de acciones"
-            htmlFor="groups-page-action-filters"
-          >
-            <select
-              id="groups-page-action-filters"
-              multiple
-              value={form.action_filter_ids.map(String)}
-              onChange={(event) =>
-                onMultiSelectChange("action_filter_ids", event)
-              }
-            >
-              {filtersByType.action.map((filter) => (
-                <option key={filter.id} value={filter.id}>
-                  {filterOptionLabel(filter, tagIndex)}
-                </option>
-              ))}
-            </select>
-          </FieldRow>
+            filters={filtersByType.action}
+            selectedIds={form.action_filter_ids}
+            tagIndex={tagIndex}
+            emptyMessage="No hay filtros de acciones. Créalos en Filtros."
+            onToggle={(filterId) =>
+              toggleFilterId("action_filter_ids", filterId)
+            }
+          />
 
-          <FieldRow
+          <FilterIdPicker
+            id="groups-page-document-filters"
             label="Filtros de documentos"
-            htmlFor="groups-page-document-filters"
-          >
-            <select
-              id="groups-page-document-filters"
-              multiple
-              value={form.document_filter_ids.map(String)}
-              onChange={(event) =>
-                onMultiSelectChange("document_filter_ids", event)
-              }
-            >
-              {filtersByType.document.map((filter) => (
-                <option key={filter.id} value={filter.id}>
-                  {filterOptionLabel(filter, tagIndex)}
-                </option>
-              ))}
-            </select>
-          </FieldRow>
+            filters={filtersByType.document}
+            selectedIds={form.document_filter_ids}
+            tagIndex={tagIndex}
+            emptyMessage="No hay filtros de documentos. Créalos en Filtros."
+            onToggle={(filterId) =>
+              toggleFilterId("document_filter_ids", filterId)
+            }
+          />
 
           {formError ? (
             <p className="groups-page__error" role="alert">

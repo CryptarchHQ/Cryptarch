@@ -1,6 +1,7 @@
 """Request/response schemas for Document (admin)."""
 
 import uuid
+from datetime import datetime
 from typing import Protocol
 
 from pydantic import BaseModel
@@ -10,6 +11,7 @@ from shared_contract import DocumentStatus
 class DocumentCreateBody(BaseModel):
     status: DocumentStatus = DocumentStatus.queued
     file_path: str | None = None
+    original_filename: str | None = None
     tag_ids: list[uuid.UUID] = []
 
 
@@ -30,6 +32,12 @@ def _canonical_str(value: str | None) -> str:
         return value
 
 
+def _uploaded_at_iso(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    return value.isoformat()
+
+
 def document_to_response(
     document: "DocumentLike",
     tag_ids: list[str] | None = None,
@@ -42,6 +50,8 @@ def document_to_response(
         "tenant_id": _canonical_str(getattr(document, "tenant_id", None)),
         "status": document.status,
         "file_path": document.file_path,
+        "original_filename": getattr(document, "original_filename", None),
+        "uploaded_at": _uploaded_at_iso(getattr(document, "uploaded_at", None)),
         "tag_ids": tag_ids,
     }
 
@@ -53,3 +63,5 @@ class DocumentLike(Protocol):
     tenant_id: str
     status: str
     file_path: str | None
+    original_filename: str | None
+    uploaded_at: datetime | None

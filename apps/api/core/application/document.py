@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 import uuid
+from datetime import UTC, datetime
 from pathlib import Path
 
 from shared_contract import DOCUMENT_STATUS_ERROR, DOCUMENT_STATUS_QUEUED
@@ -75,6 +76,13 @@ def get_document(
     return repo.get_by_id(document_id, tenant_id)
 
 
+def _sanitize_original_filename(filename: str) -> str | None:
+    """Client basename only (no path components). Empty → None."""
+    # Normalize separators so basename works for both / and \ paths.
+    name = Path(filename.replace("\\", "/")).name
+    return name or None
+
+
 def create_document(
     tenant_id: str,
     status: str,
@@ -82,6 +90,7 @@ def create_document(
     tag_ids: list[str],
     repo: DocumentRepository,
     tag_repo: TagRepository,
+    original_filename: str | None = None,
 ) -> Document:
     """Create document in tenant. Raises TagNotFoundError if any tag_id is not in tenant."""
     if tag_ids:
@@ -90,6 +99,8 @@ def create_document(
         tenant_id=tenant_id,
         status=status,
         file_path=file_path,
+        original_filename=original_filename,
+        uploaded_at=None,
     )
     return repo.add(doc, tag_ids)
 
@@ -105,6 +116,7 @@ def upload_document(
 
     Raises UnsupportedFileTypeError if extension is not PDF/TXT/CSV.
     Does not create a document when the type is rejected.
+    On-disk name remains a UUID; original client basename is stored separately.
     """
     ext = _extension_of(filename)
     if ext not in ALLOWED_UPLOAD_EXTENSIONS:
@@ -121,6 +133,8 @@ def upload_document(
                 tenant_id=tenant_id,
                 status=DOCUMENT_STATUS_QUEUED,
                 file_path=file_path,
+                original_filename=_sanitize_original_filename(filename),
+                uploaded_at=datetime.now(UTC),
             ),
             tag_ids=[],
         )

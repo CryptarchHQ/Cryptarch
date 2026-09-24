@@ -10,13 +10,15 @@ services:
     image: python:3.11-slim
     working_dir: /workspace/apps/api
     command: sh -c "pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
-    volumes: ["../:/workspace"]
+    volumes:
+      - "../:/workspace"
+      - cryptarch_uploads:/tmp/cryptarch-uploads
     environment:
       APP_ENV: development
       DEV_SEED_TENANT_ID: 00000000-0000-4000-8000-000000000001
       DEV_ADMIN_EMAIL: admin@dev.local
       DEV_ADMIN_PASSWORD: admin
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/appdb
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/appdb
       REDIS_URL: redis://redis:6379/0
       QDRANT_URL: http://qdrant:6333
     ports: ["8000:8000"]
@@ -25,7 +27,9 @@ services:
     image: python:3.11-slim
     working_dir: /workspace/workers/vectorizer
     command: sh -c "pip install -r requirements.txt && python worker.py"
-    volumes: ["../:/workspace"]
+    volumes:
+      - "../:/workspace"
+      - cryptarch_uploads:/tmp/cryptarch-uploads
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/appdb
       REDIS_URL: redis://redis:6379/0
@@ -50,3 +54,4 @@ volumes:
   pgdata:
   qdrant_data:
   web_node_modules:
+  cryptarch_uploads:

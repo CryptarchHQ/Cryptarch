@@ -271,7 +271,7 @@ describe("groupsRoutes", () => {
     });
   });
 
-  it("el element de la ruta groups muestra Asistente de permisos", async () => {
+  it("el element de la ruta groups muestra Crear con asistente", async () => {
     const groupsElement = groupsRoutes.find(
       (r) => r.path === "groups",
     )?.element;
@@ -284,10 +284,10 @@ describe("groupsRoutes", () => {
     );
 
     expect(
-      await screen.findByRole("link", { name: "Asistente de permisos" }),
+      await screen.findByRole("link", { name: "Crear con asistente" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Asistente de permisos" }),
+      screen.getByRole("link", { name: "Crear con asistente" }),
     ).toHaveAttribute("href", "/admin/groups/permissions/new");
   });
 });

@@ -86,6 +86,7 @@ def create_document(
             tag_ids_str,
             repo,
             tag_repo,
+            original_filename=body.original_filename,
         )
         db.commit()
     except TagNotFoundError:

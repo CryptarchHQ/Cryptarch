@@ -22,22 +22,6 @@
   cursor: not-allowed;
 }
 
-.users-page__secondary-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.4rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-  background: var(--surface);
-  color: var(--text);
-  cursor: pointer;
-}
-
-.users-page__secondary-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .users-page__filters {
   display: flex;
   flex-wrap: wrap;
@@ -58,7 +42,6 @@
 }
 
 .users-page__filter-field select,
-.users-page__save-filter input,
 .users-page__drawer-form input,
 .users-page__drawer-form select {
   padding: 0.4rem 0.55rem;
@@ -68,16 +51,14 @@
   color: var(--text);
 }
 
-.users-page__tag-filters,
-.users-page__saved-filters {
+.users-page__tag-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
   align-items: center;
 }
 
-.users-page__tag-chip,
-.users-page__saved-chip {
+.users-page__tag-chip {
   padding: 0.3rem 0.65rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
@@ -91,13 +72,6 @@
   border-color: var(--accent);
   background: var(--accentSoft);
   color: var(--text);
-}
-
-.users-page__save-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
 }
 
 .users-page__table-wrap {

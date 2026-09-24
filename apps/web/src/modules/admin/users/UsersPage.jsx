@@ -31,15 +31,6 @@ function includesAll(source, expected) {
   return (expected || []).every((tagId) => sourceSet.has(String(tagId)));
 }
 
-function proposedFilterName(roleFilter, tagFilter) {
-  if (Array.isArray(tagFilter) && tagFilter.length > 0) {
-    return "Usuarios con estas tags";
-  }
-  if (roleFilter === "admin") return "Usuarios admin";
-  if (roleFilter === "user") return "Usuarios user";
-  return "Usuarios";
-}
-
 function formsEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
@@ -50,7 +41,6 @@ export function UsersPage({ currentUserId: currentUserIdProp } = {}) {
 
   const [users, setUsers] = useState([]);
   const [tags, setTags] = useState([]);
-  const [filters, setFilters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formError, setFormError] = useState(null);
@@ -58,10 +48,6 @@ export function UsersPage({ currentUserId: currentUserIdProp } = {}) {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [tagFilter, setTagFilter] = useState([]);
-  const [newFilterName, setNewFilterName] = useState(() =>
-    proposedFilterName("all", []),
-  );
-  const [savingFilter, setSavingFilter] = useState(false);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -76,23 +62,16 @@ export function UsersPage({ currentUserId: currentUserIdProp } = {}) {
     setLoading(true);
     setError(null);
     try {
-      const [usersResult, tagsResult, filtersResult] = await Promise.all([
+      const [usersResult, tagsResult] = await Promise.all([
         api.get("/admin/users"),
         api.get("/admin/tags"),
-        api.get("/admin/filters"),
       ]);
       setUsers(normalizeList(usersResult));
       setTags(normalizeList(tagsResult));
-      setFilters(
-        normalizeList(filtersResult).filter(
-          (item) => item.target_type === "user",
-        ),
-      );
     } catch (nextError) {
       setError(nextError);
       setUsers([]);
       setTags([]);
-      setFilters([]);
     } finally {
       setLoading(false);
     }
@@ -101,10 +80,6 @@ export function UsersPage({ currentUserId: currentUserIdProp } = {}) {
   useEffect(() => {
     load();
   }, [load]);
-
-  useEffect(() => {
-    setNewFilterName(proposedFilterName(roleFilter, tagFilter));
-  }, [roleFilter, tagFilter]);
 
   const tagIndex = useMemo(() => tagsById(tags), [tags]);
 
@@ -219,24 +194,6 @@ export function UsersPage({ currentUserId: currentUserIdProp } = {}) {
     }
   }
 
-  async function onSaveFilter() {
-    if (!newFilterName.trim() || tagFilter.length === 0 || savingFilter) return;
-    setSavingFilter(true);
-    setError(null);
-    try {
-      await api.post("/admin/filters", {
-        name: newFilterName.trim(),
-        target_type: "user",
-        tag_ids: tagFilter,
-      });
-      await load();
-    } catch (nextError) {
-      setError(nextError);
-    } finally {
-      setSavingFilter(false);
-    }
-  }
-
   function toggleTagFilter(tagId) {
     const id = String(tagId);
     setTagFilter((prev) => {
@@ -267,7 +224,7 @@ export function UsersPage({ currentUserId: currentUserIdProp } = {}) {
       <div
         className="users-page__tag-filters"
         role="group"
-        aria-label="Filtrar por tags"
+        aria-label="Filtrar por etiquetas"
       >
         {tags.map((tag) => {
           const id = String(tag.id ?? tag.name);
@@ -288,49 +245,6 @@ export function UsersPage({ currentUserId: currentUserIdProp } = {}) {
             </button>
           );
         })}
-      </div>
-
-      {filters.length > 0 ? (
-        <div
-          className="users-page__saved-filters"
-          role="group"
-          aria-label="Filtros guardados"
-        >
-          {filters.map((filter) => (
-            <button
-              key={filter.id || filter.name}
-              type="button"
-              className="users-page__saved-chip"
-              onClick={() =>
-                setTagFilter(
-                  Array.isArray(filter.tag_ids) ? filter.tag_ids : [],
-                )
-              }
-            >
-              {filter.name}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      <div className="users-page__save-filter">
-        <input
-          type="text"
-          value={newFilterName}
-          onChange={(event) => setNewFilterName(event.target.value)}
-          aria-label="Nombre del filtro"
-          placeholder="Nombre del filtro"
-        />
-        <button
-          type="button"
-          className="users-page__secondary-btn"
-          onClick={onSaveFilter}
-          disabled={
-            tagFilter.length === 0 || savingFilter || !newFilterName.trim()
-          }
-        >
-          Guardar como filtro
-        </button>
       </div>
     </div>
   );

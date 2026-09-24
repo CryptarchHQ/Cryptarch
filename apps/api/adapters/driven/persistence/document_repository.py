@@ -15,6 +15,8 @@ def _orm_to_domain(orm: DocumentOrm) -> Document:
         tenant_id=str(orm.tenant_id),
         status=orm.status,
         file_path=orm.file_path,
+        original_filename=orm.original_filename,
+        uploaded_at=orm.uploaded_at,
     )
 
 
@@ -76,6 +78,8 @@ class SqlAlchemyDocumentRepository(DocumentRepository):
             tenant_id=document.tenant_id,
             status=document.status,
             file_path=document.file_path,
+            original_filename=document.original_filename,
+            uploaded_at=document.uploaded_at,
         )
         self._session.add(orm)
         self._session.flush()

@@ -1,11 +1,11 @@
-.groups-page {
+.tags-page {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   color: var(--text);
 }
 
-.groups-page__primary-btn {
+.tags-page__primary-btn {
   display: inline-flex;
   align-items: center;
   padding: 0.45rem 0.85rem;
@@ -17,12 +17,12 @@
   cursor: pointer;
 }
 
-.groups-page__primary-btn:disabled {
+.tags-page__primary-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.groups-page__drawer-form input[type="text"] {
+.tags-page__drawer-form input {
   padding: 0.4rem 0.55rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
@@ -30,74 +30,36 @@
   color: var(--text);
 }
 
-.groups-page__filter-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.groups-page__filter-item {
-  margin: 0;
-}
-
-.groups-page__filter-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.35rem 0.4rem;
-  border-radius: var(--radius-control);
-  cursor: pointer;
-  color: var(--text);
-}
-
-.groups-page__filter-option:hover {
-  background: color-mix(in srgb, var(--border) 35%, transparent);
-}
-
-.groups-page__filter-option input[type="checkbox"] {
-  margin-top: 0.2rem;
-  flex-shrink: 0;
-}
-
-.groups-page__filter-empty {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.groups-page__table-wrap {
+.tags-page__table-wrap {
   overflow-x: auto;
 }
 
-.groups-page__table {
+.tags-page__table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.groups-page__table th,
-.groups-page__table td {
+.tags-page__table th,
+.tags-page__table td {
   padding: 0.65rem 0.75rem;
   text-align: left;
   border-bottom: 1px solid var(--border);
   vertical-align: top;
 }
 
-.groups-page__table th {
+.tags-page__table th {
   color: var(--muted);
   font-weight: 600;
   font-size: 0.85rem;
 }
 
-.groups-page__row-actions {
+.tags-page__row-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
 }
 
-.groups-page__no-match {
+.tags-page__no-match {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -106,29 +68,29 @@
   color: var(--muted);
 }
 
-.groups-page__no-match p {
+.tags-page__no-match p {
   margin: 0;
   color: var(--text);
 }
 
-.groups-page__error {
+.tags-page__error {
   margin: 0;
   color: var(--text);
 }
 
-.groups-page__drawer-form {
+.tags-page__drawer-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.groups-page__drawer-footer {
+.tags-page__drawer-footer {
   display: flex;
   justify-content: flex-end;
   padding-top: 0.5rem;
 }
 
-.groups-page__toast {
+.tags-page__toast {
   position: fixed;
   right: 1rem;
   bottom: 1rem;

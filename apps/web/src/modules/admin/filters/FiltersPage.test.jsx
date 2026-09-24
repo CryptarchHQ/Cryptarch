@@ -51,7 +51,7 @@ describe("FiltersPage", () => {
     global.fetch = vi.fn();
   });
 
-  it("muestra un filtro con tags como «tiene TODAS: Admin, CRM» sin el id del filtro", async () => {
+  it("muestra un filtro con tags como «tiene Admin y CRM» sin el id del filtro", async () => {
     fetch.mockImplementation((url) => {
       const path = String(url).replace("http://localhost:8000", "");
       if (path === "/admin/filters") {
@@ -78,7 +78,7 @@ describe("FiltersPage", () => {
 
     expect(await screen.findByText("Admins CRM")).toBeInTheDocument();
     expect(screen.getByText("Usuario")).toBeInTheDocument();
-    expect(screen.getByText("tiene TODAS: Admin, CRM")).toBeInTheDocument();
+    expect(screen.getByText("tiene Admin y CRM")).toBeInTheDocument();
     expect(screen.queryByText(FILTER_ID)).not.toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Filtros" }),

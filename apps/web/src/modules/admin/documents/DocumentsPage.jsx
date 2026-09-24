@@ -61,6 +61,24 @@ function isAllowedFile(file) {
   return ALLOWED_EXTENSIONS.has(fileExtension(file.name));
 }
 
+/** Título visible: original_filename si existe; si no, basename de file_path. */
+function documentTitle(row) {
+  const original = String(row?.original_filename ?? "").trim();
+  if (original) return original;
+  return extractFileName(row?.file_path);
+}
+
+/** Fecha corta es-ES a partir de uploaded_at; sin inventar si falta. */
+function formatUploadedAt(value) {
+  if (value == null || value === "") return "—";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
 function formsEqual(a, b) {
   return (
     a.file === b.file &&
@@ -202,8 +220,8 @@ export function DocumentsPage() {
       const rowTags = Array.isArray(row.tag_ids) ? row.tag_ids : [];
       if (statusFilter !== "all" && row.status !== statusFilter) return false;
       if (term) {
-        const basename = extractFileName(row.file_path).toLowerCase();
-        if (!basename.includes(term)) return false;
+        const title = documentTitle(row).toLowerCase();
+        if (!title.includes(term)) return false;
       }
       if (!includesAll(rowTags, tagFilter)) return false;
       return true;
@@ -407,7 +425,8 @@ export function DocumentsPage() {
                   </thead>
                   <tbody>
                     {filteredDocuments.map((row) => {
-                      const basename = extractFileName(row.file_path);
+                      const title = documentTitle(row);
+                      const dateLabel = formatUploadedAt(row.uploaded_at);
                       const labels = (row.tag_ids || []).map(
                         (tagId) => tagIndex.get(String(tagId)) || String(tagId),
                       );
@@ -418,7 +437,8 @@ export function DocumentsPage() {
                         <FragmentRow
                           key={rowKey}
                           row={row}
-                          basename={basename}
+                          title={title}
+                          dateLabel={dateLabel}
                           labels={labels}
                           isError={isError}
                           expanded={expanded}
@@ -513,7 +533,8 @@ export function DocumentsPage() {
 
 function FragmentRow({
   row,
-  basename,
+  title,
+  dateLabel,
   labels,
   isError,
   expanded,
@@ -538,10 +559,10 @@ function FragmentRow({
               aria-expanded={expanded}
               onClick={onToggle}
             >
-              {basename}
+              {title}
             </button>
           ) : (
-            basename
+            title
           )}
         </td>
         <td>
@@ -554,7 +575,7 @@ function FragmentRow({
             ))}
           </ul>
         </td>
-        <td>—</td>
+        <td>{dateLabel}</td>
       </tr>
       {isError && expanded ? (
         <tr className="documents-page__error-detail">

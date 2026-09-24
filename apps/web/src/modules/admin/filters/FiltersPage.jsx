@@ -29,11 +29,17 @@ function tagsById(tags) {
   return index;
 }
 
+function joinTagNames(names) {
+  if (names.length <= 1) return names[0] || "";
+  if (names.length === 2) return `${names[0]} y ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+}
+
 function formatCriterion(tagIds, tagIndex) {
   const ids = Array.isArray(tagIds) ? tagIds : [];
   const names = ids.map((id) => tagIndex.get(String(id))).filter(Boolean);
-  if (names.length === 0) return "tiene TODAS: —";
-  return `tiene TODAS: ${names.join(", ")}`;
+  if (names.length === 0) return "sin etiquetas";
+  return `tiene ${joinTagNames(names)}`;
 }
 
 function formsEqual(a, b) {
@@ -350,7 +356,7 @@ export function FiltersPage() {
             </FieldRow>
           ) : null}
           <div className="filters-page__drawer-tags">
-            <span className="filters-page__field-label">Tags (TODAS)</span>
+            <span className="filters-page__field-label">Etiquetas</span>
             <TagPicker
               options={tags}
               value={form.tag_ids}

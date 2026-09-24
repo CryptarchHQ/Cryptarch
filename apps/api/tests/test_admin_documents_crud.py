@@ -168,6 +168,41 @@ def test_list_documents_returns_tag_ids(
     assert _uuid_eq(data[0]["tag_ids"][0], tag_a.id)
 
 
+def test_list_documents_includes_original_filename_and_uploaded_at(
+    client: TestClient, tenant, admin_user, db_session: Session
+):
+    """List exposes original_filename and uploaded_at (null when unset)."""
+    uploaded_at = datetime(2025, 1, 10, 8, 30, 0, tzinfo=UTC)
+    with_meta = Document(
+        id=_id(),
+        tenant_id=tenant.id,
+        status="queued",
+        file_path="/docs/with.pdf",
+        original_filename="informe.pdf",
+        uploaded_at=uploaded_at,
+    )
+    without_meta = Document(
+        id=_id(),
+        tenant_id=tenant.id,
+        status="queued",
+        file_path="/docs/legacy.pdf",
+    )
+    db_session.add(with_meta)
+    db_session.add(without_meta)
+    db_session.flush()
+
+    r = client.get(
+        "/admin/documents",
+        headers=_auth_headers(tenant.id, admin_user.id),
+    )
+    assert r.status_code == 200
+    by_path = {d["file_path"]: d for d in r.json()}
+    assert by_path["/docs/with.pdf"]["original_filename"] == "informe.pdf"
+    assert by_path["/docs/with.pdf"]["uploaded_at"] is not None
+    assert by_path["/docs/legacy.pdf"]["original_filename"] is None
+    assert by_path["/docs/legacy.pdf"]["uploaded_at"] is None
+
+
 def test_list_documents_unauth_401(client: TestClient):
     r = client.get("/admin/documents")
     assert r.status_code == 401

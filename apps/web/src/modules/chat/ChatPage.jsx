@@ -14,9 +14,15 @@ import {
 import "./chatPage.css";
 
 const SLOW_LOAD_MS = 8000;
-const EMPTY_ACTIONS_MESSAGE =
+const EMPTY_ACTIONS_MESSAGE_USER =
   "Tu espacio aún no tiene acciones disponibles. Habla con tu administrador.";
+const EMPTY_ACTIONS_MESSAGE_ADMIN =
+  "Tu espacio aún no tiene acciones disponibles. Tu usuario no coincide con ningún grupo; puedes revisarlo en Etiquetas y Grupos.";
 const SLOW_LOAD_MESSAGE = "Esto está tardando más de lo normal";
+
+export function emptyActionsMessage(isAdmin) {
+  return isAdmin ? EMPTY_ACTIONS_MESSAGE_ADMIN : EMPTY_ACTIONS_MESSAGE_USER;
+}
 
 export function ChatPage() {
   const [actions, setActions] = useState([]);
@@ -149,7 +155,7 @@ export function ChatPage() {
 
       {showEmpty ? (
         <section className="chat-page__panel">
-          <p className="chat-page__empty">{EMPTY_ACTIONS_MESSAGE}</p>
+          <p className="chat-page__empty">{emptyActionsMessage(isAdmin)}</p>
         </section>
       ) : null}
 
