@@ -481,7 +481,8 @@ button.danger {
 .kv-row {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
-  gap: 8px;
+  gap: 6px;
+  align-items: center;
 }
 
 .schema-row {
@@ -545,9 +546,14 @@ button.danger {
   gap: 10px;
 }
 
-/* TagPicker mejorado */
+/* TagPicker mejorado (Atlas) */
 .tag-picker {
   max-width: 100%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-surface);
+  padding: 8px;
+  gap: 6px;
 }
 
 .tag-picker-selected {
@@ -559,6 +565,10 @@ button.danger {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  border-radius: var(--radius-control);
+  background: var(--accentSoft);
+  border-color: var(--accent);
+  color: var(--text);
 }
 
 .badge-remove {
@@ -588,12 +598,11 @@ button.danger {
   padding: 4px 10px;
   font-size: 12px;
   cursor: pointer;
-  border-radius: 999px;
+  border-radius: var(--radius-control);
 }
 
 .tag-picker-available .badge-available:hover {
   background: var(--accentSoft);
-  border-color: var(--accent);
 }
 
 .tag-picker-create {
@@ -613,7 +622,7 @@ button.danger {
 
 .tag-picker.focused .tag-picker-create {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.15);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
 .tag-picker-create {
