@@ -1,5 +1,3 @@
-import { AdminResourcePage } from "../AdminResourcePage";
+import { TagsPage } from "./TagsPage";
 
-export const tagsRoutes = [
-  { path: "tags", element: <AdminResourcePage resource="tags" /> },
-];
+export const tagsRoutes = [{ path: "tags", element: <TagsPage /> }];
