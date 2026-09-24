@@ -136,15 +136,29 @@ describe("DocumentsPage", () => {
       await screen.findByRole("heading", { name: "Documentos" }),
     ).toBeInTheDocument();
 
+    expect(
+      screen.getAllByRole("button", { name: "Añadir documento" }),
+    ).toHaveLength(1);
+    expect(
+      screen.queryByRole("button", { name: "Elegir fichero" }),
+    ).not.toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("button", { name: "Añadir documento" }));
 
-    const fileInput = await screen.findByLabelText("Fichero del documento");
+    const fileInputs = screen.getAllByLabelText("Seleccionar fichero");
+    expect(fileInputs).toHaveLength(1);
     const file = new File(["contenido"], "nuevo.pdf", {
       type: "application/pdf",
     });
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.change(fileInputs[0], { target: { files: [file] } });
 
     expect(await screen.findByDisplayValue("nuevo.pdf")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Elegir fichero" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Atrás" }),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
 

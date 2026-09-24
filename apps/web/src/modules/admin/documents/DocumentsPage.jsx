@@ -82,13 +82,7 @@ function DocumentStatusBadge({ status }) {
   );
 }
 
-function DropZone({
-  compact = false,
-  onFileAccepted,
-  onReject,
-  inputRef,
-  disabled = false,
-}) {
+function DropZone({ onFileAccepted, onReject, inputRef, disabled = false }) {
   const [dragging, setDragging] = useState(false);
 
   function acceptFile(file) {
@@ -111,11 +105,7 @@ function DropZone({
 
   return (
     <div
-      className={
-        compact
-          ? `documents-page__dropzone documents-page__dropzone--compact${dragging ? " documents-page__dropzone--dragging" : ""}`
-          : `documents-page__dropzone${dragging ? " documents-page__dropzone--dragging" : ""}`
-      }
+      className={`documents-page__dropzone${dragging ? " documents-page__dropzone--dragging" : ""}`}
       onDragEnter={(event) => {
         event.preventDefault();
         if (!disabled) setDragging(true);
@@ -144,19 +134,15 @@ function DropZone({
         disabled={disabled}
         aria-label="Seleccionar fichero"
       />
-      <p className="documents-page__dropzone-title">
-        {compact
-          ? "Suelta un fichero aquí o elige uno"
-          : "Suelta aquí tu primer documento"}
-      </p>
+      <p className="documents-page__dropzone-title">Arrastra documentos aquí</p>
       <p className="documents-page__dropzone-hint">PDF, TXT o CSV</p>
       <button
         type="button"
-        className="documents-page__secondary-btn"
+        className="documents-page__primary-btn"
         disabled={disabled}
         onClick={() => inputRef?.current?.click()}
       >
-        Elegir fichero
+        Añadir documento
       </button>
     </div>
   );
@@ -175,7 +161,6 @@ export function DocumentsPage() {
   const [tagFilter, setTagFilter] = useState([]);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerStep, setDrawerStep] = useState(1);
   const [form, setForm] = useState(emptyUploadForm);
   const [formInitial, setFormInitial] = useState(emptyUploadForm);
   const [saving, setSaving] = useState(false);
@@ -185,7 +170,6 @@ export function DocumentsPage() {
   const [toast, setToast] = useState(null);
 
   const dropInputRef = useRef(null);
-  const drawerFileInputRef = useRef(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -238,19 +222,8 @@ export function DocumentsPage() {
     setTagFilter([]);
   }
 
-  function openCreateDrawer() {
-    const next = emptyUploadForm();
-    setForm(next);
-    setFormInitial(next);
-    setDrawerStep(1);
-    setFormError(null);
-    setDropError(null);
-    setDrawerOpen(true);
-  }
-
   function closeDrawer() {
     setDrawerOpen(false);
-    setDrawerStep(1);
     setForm(emptyUploadForm());
     setFormInitial(emptyUploadForm());
     setFormError(null);
@@ -264,26 +237,9 @@ export function DocumentsPage() {
     };
     setForm(next);
     setFormInitial(emptyUploadForm());
-    setDrawerStep(2);
     setFormError(null);
     setDropError(null);
     setDrawerOpen(true);
-  }
-
-  function onDrawerFileChosen(file) {
-    if (!isAllowedFile(file)) {
-      setFormError(
-        "Solo se admiten ficheros PDF, TXT o CSV. Elige otro archivo.",
-      );
-      return;
-    }
-    setForm((prev) => ({
-      ...prev,
-      file,
-      title: extractFileName(file.name),
-    }));
-    setFormError(null);
-    setDrawerStep(2);
   }
 
   async function onCreateTag(name) {
@@ -410,15 +366,6 @@ export function DocumentsPage() {
         onSearchChange={setSearch}
         searchPlaceholder="Buscar por nombre de fichero"
         filters={filtersSlot}
-        headerActions={
-          <button
-            type="button"
-            className="documents-page__primary-btn"
-            onClick={openCreateDrawer}
-          >
-            Añadir documento
-          </button>
-        }
         status={listStatus}
         errorMessage={error?.message || "No se pudieron cargar los documentos"}
       >
@@ -428,66 +375,71 @@ export function DocumentsPage() {
           </p>
         ) : null}
 
-        <DropZone
-          compact={hasDocuments}
-          inputRef={dropInputRef}
-          onFileAccepted={beginWithFile}
-          onReject={setDropError}
-        />
+        <div className="documents-page__layout">
+          <div className="documents-page__library">
+            {!hasDocuments ? (
+              <div className="documents-page__library-empty">
+                <p>La biblioteca está vacía</p>
+              </div>
+            ) : null}
 
-        {!hasDocuments ? (
-          <p className="documents-page__empty-hint">
-            O usa «Añadir documento» para subir un PDF, TXT o CSV.
-          </p>
-        ) : null}
+            {hasDocuments &&
+            filteredDocuments.length === 0 &&
+            hasActiveFilters ? (
+              <div className="documents-page__no-match">
+                <p>Nadie coincide con estos criterios</p>
+                <button type="button" onClick={clearFilters}>
+                  Limpiar filtros
+                </button>
+              </div>
+            ) : null}
 
-        {hasDocuments && filteredDocuments.length === 0 && hasActiveFilters ? (
-          <div className="documents-page__no-match">
-            <p>Nadie coincide con estos criterios</p>
-            <button type="button" onClick={clearFilters}>
-              Limpiar filtros
-            </button>
+            {filteredDocuments.length > 0 ? (
+              <div className="documents-page__table-wrap">
+                <table className="documents-page__table">
+                  <thead>
+                    <tr>
+                      <th>Título</th>
+                      <th>Estado</th>
+                      <th>Tags</th>
+                      <th>Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDocuments.map((row) => {
+                      const basename = extractFileName(row.file_path);
+                      const labels = (row.tag_ids || []).map(
+                        (tagId) => tagIndex.get(String(tagId)) || String(tagId),
+                      );
+                      const isError = row.status === "error";
+                      const rowKey = String(row.id ?? row.file_path);
+                      const expanded = isError && expandedIds.has(rowKey);
+                      return (
+                        <FragmentRow
+                          key={rowKey}
+                          row={row}
+                          basename={basename}
+                          labels={labels}
+                          isError={isError}
+                          expanded={expanded}
+                          retrying={retryingId === row.id}
+                          onToggle={() => toggleExpanded(rowKey)}
+                          onRetry={() => onRetry(row.id)}
+                        />
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
           </div>
-        ) : null}
 
-        {filteredDocuments.length > 0 ? (
-          <div className="documents-page__table-wrap">
-            <table className="documents-page__table">
-              <thead>
-                <tr>
-                  <th>Título</th>
-                  <th>Estado</th>
-                  <th>Tags</th>
-                  <th>Fecha</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDocuments.map((row) => {
-                  const basename = extractFileName(row.file_path);
-                  const labels = (row.tag_ids || []).map(
-                    (tagId) => tagIndex.get(String(tagId)) || String(tagId),
-                  );
-                  const isError = row.status === "error";
-                  const rowKey = String(row.id ?? row.file_path);
-                  const expanded = isError && expandedIds.has(rowKey);
-                  return (
-                    <FragmentRow
-                      key={rowKey}
-                      row={row}
-                      basename={basename}
-                      labels={labels}
-                      isError={isError}
-                      expanded={expanded}
-                      retrying={retryingId === row.id}
-                      onToggle={() => toggleExpanded(rowKey)}
-                      onRetry={() => onRetry(row.id)}
-                    />
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
+          <DropZone
+            inputRef={dropInputRef}
+            onFileAccepted={beginWithFile}
+            onReject={setDropError}
+          />
+        </div>
       </ListPage>
 
       {error && listStatus === "ready" ? (
@@ -502,94 +454,52 @@ export function DocumentsPage() {
         dirty={dirty}
         onClose={closeDrawer}
       >
-        {drawerStep === 1 ? (
-          <div className="documents-page__drawer-form">
-            <p className="documents-page__drawer-copy">
-              Elige un fichero PDF, TXT o CSV para encolarlo.
-            </p>
+        <form
+          className="documents-page__drawer-form"
+          onSubmit={onConfirmUpload}
+        >
+          <p className="documents-page__drawer-copy">
+            Fichero: <strong>{form.file?.name || "—"}</strong>
+          </p>
+          <FieldRow label="Título" htmlFor="documents-page-title">
             <input
-              ref={drawerFileInputRef}
-              type="file"
-              accept=".pdf,.txt,.csv,application/pdf,text/plain,text/csv"
-              className="documents-page__file-input"
-              aria-label="Fichero del documento"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (file) onDrawerFileChosen(file);
-              }}
+              id="documents-page-title"
+              type="text"
+              value={form.title}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, title: event.target.value }))
+              }
             />
-            <button
-              type="button"
-              className="documents-page__primary-btn"
-              onClick={() => drawerFileInputRef.current?.click()}
-            >
-              Elegir fichero
-            </button>
-            {formError ? (
-              <p className="documents-page__error" role="alert">
-                {formError}
-              </p>
-            ) : null}
+          </FieldRow>
+          <p className="documents-page__field-hint">
+            Solo visual; el API no guarda título.
+          </p>
+          <div className="documents-page__drawer-tags">
+            <span className="documents-page__filter-label">Tags</span>
+            <TagPicker
+              options={tags}
+              value={form.tag_ids}
+              onChange={(next) =>
+                setForm((prev) => ({ ...prev, tag_ids: next }))
+              }
+              onCreateTag={onCreateTag}
+            />
           </div>
-        ) : (
-          <form
-            className="documents-page__drawer-form"
-            onSubmit={onConfirmUpload}
-          >
-            <p className="documents-page__drawer-copy">
-              Fichero: <strong>{form.file?.name || "—"}</strong>
+          {formError ? (
+            <p className="documents-page__error" role="alert">
+              {formError}
             </p>
-            <FieldRow label="Título" htmlFor="documents-page-title">
-              <input
-                id="documents-page-title"
-                type="text"
-                value={form.title}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, title: event.target.value }))
-                }
-              />
-            </FieldRow>
-            <p className="documents-page__field-hint">
-              Solo visual; el API no guarda título.
-            </p>
-            <div className="documents-page__drawer-tags">
-              <span className="documents-page__filter-label">Tags</span>
-              <TagPicker
-                options={tags}
-                value={form.tag_ids}
-                onChange={(next) =>
-                  setForm((prev) => ({ ...prev, tag_ids: next }))
-                }
-                onCreateTag={onCreateTag}
-              />
-            </div>
-            {formError ? (
-              <p className="documents-page__error" role="alert">
-                {formError}
-              </p>
-            ) : null}
-            <div className="documents-page__drawer-footer">
-              <button
-                type="button"
-                className="documents-page__secondary-btn"
-                onClick={() => {
-                  setDrawerStep(1);
-                  setFormError(null);
-                }}
-              >
-                Atrás
-              </button>
-              <button
-                type="submit"
-                className="documents-page__primary-btn"
-                disabled={saving || !form.file}
-              >
-                {saving ? "Subiendo..." : "Confirmar"}
-              </button>
-            </div>
-          </form>
-        )}
+          ) : null}
+          <div className="documents-page__drawer-footer">
+            <button
+              type="submit"
+              className="documents-page__primary-btn"
+              disabled={saving || !form.file}
+            >
+              {saving ? "Subiendo..." : "Confirmar"}
+            </button>
+          </div>
+        </form>
       </Drawer>
 
       {toast ? (
