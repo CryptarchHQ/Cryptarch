@@ -5,6 +5,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "../app/AuthProvider";
 import { appRoutes } from "../app/router";
 
+function fakeJwt(claims) {
+  const header = btoa(JSON.stringify({ alg: "none", typ: "JWT" }));
+  const payload = btoa(JSON.stringify(claims));
+  return `${header}.${payload}.sig`;
+}
+
 function renderWithRoute(route) {
   const router = createMemoryRouter(appRoutes, { initialEntries: [route] });
   return render(
@@ -50,15 +56,16 @@ describe("smoke routes", () => {
     fetch
       .mockImplementationOnce(() =>
         mockJsonResponse(200, {
-          access_token: "token-demo",
+          access_token: fakeJwt({ tenant_id: "t1", role: "admin" }),
           token_type: "bearer",
         }),
       )
       .mockImplementationOnce(() =>
         mockJsonResponse(200, {
-          sub: "admin@test",
-          tenant_id: "t1",
+          email: "admin@test",
+          tenant_name: "Acme",
           role: "admin",
+          sub: "uuid-no-visible",
         }),
       )
       .mockImplementationOnce(() => mockJsonResponse(200, []))
@@ -86,6 +93,7 @@ describe("smoke routes", () => {
         screen.getByRole("heading", { name: "Usuarios" }),
       ).toBeInTheDocument();
     });
+    expect(screen.queryByText("uuid-no-visible")).not.toBeInTheDocument();
   });
 
   it("renderiza chat para usuario autenticado", async () => {
@@ -93,7 +101,13 @@ describe("smoke routes", () => {
       SESSION_STORAGE_KEY,
       JSON.stringify({
         token: "token-user",
-        user: { sub: "user@test", tenant_id: "t1", role: "user" },
+        user: {
+          email: "user@test",
+          tenant_name: "Acme",
+          sub: "user@test",
+          tenant_id: "t1",
+          role: "user",
+        },
       }),
     );
     fetch.mockImplementation((url, options = {}) => {
@@ -138,7 +152,13 @@ describe("smoke routes", () => {
       SESSION_STORAGE_KEY,
       JSON.stringify({
         token: "token-admin",
-        user: { sub: "admin@test", tenant_id: "t1", role: "admin" },
+        user: {
+          email: "admin@test",
+          tenant_name: "Acme",
+          sub: "admin@test",
+          tenant_id: "t1",
+          role: "admin",
+        },
       }),
     );
     mockByPath({
@@ -172,7 +192,13 @@ describe("smoke routes", () => {
       SESSION_STORAGE_KEY,
       JSON.stringify({
         token: "token-admin",
-        user: { sub: "admin@test", tenant_id: "t1", role: "admin" },
+        user: {
+          email: "admin@test",
+          tenant_name: "Acme",
+          sub: "admin@test",
+          tenant_id: "t1",
+          role: "admin",
+        },
       }),
     );
     fetch.mockImplementation((url, options = {}) => {

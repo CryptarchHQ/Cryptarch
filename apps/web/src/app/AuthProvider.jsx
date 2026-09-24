@@ -49,27 +49,26 @@ export function AuthProvider({ children }) {
     const token = authPayload?.access_token;
     if (!token) throw { status: 500, message: "Respuesta de login inválida" };
 
-    let profile;
-    try {
-      profile = await apiRequest(
-        "/admin/me",
-        { method: "GET", headers: { Authorization: `Bearer ${token}` } },
-        { skipAuth: true },
-      );
-    } catch (error) {
-      // Si /admin/me devuelve 403 para perfiles user, usamos claims del JWT.
-      if (error?.status !== 403) throw error;
-      profile = decodeJwtClaims(token);
-    }
+    const profile = await apiRequest(
+      "/me",
+      { method: "GET", headers: { Authorization: `Bearer ${token}` } },
+      { skipAuth: true },
+    );
 
-    if (!profile?.sub || !profile?.tenant_id || !profile?.role) {
+    if (!profile?.sub || !profile?.role) {
       throw {
         status: 500,
         message: "No se pudo resolver el perfil de sesión.",
       };
     }
 
-    const nextSession = { token, user: profile };
+    const claims = decodeJwtClaims(token);
+    const user = {
+      ...profile,
+      tenant_id: claims?.tenant_id,
+    };
+
+    const nextSession = { token, user };
     writeSession(nextSession);
     setSession(nextSession);
     return nextSession;
@@ -90,11 +89,17 @@ export function AuthProvider({ children }) {
     if (!session?.token) return null;
     setIsBootstrapping(true);
     try {
-      const profile = await api.get("/admin/me");
-      const nextSession = { ...session, user: profile };
+      const profile = await api.get("/me");
+      const nextSession = {
+        ...session,
+        user: {
+          ...profile,
+          tenant_id: session.user?.tenant_id,
+        },
+      };
       writeSession(nextSession);
       setSession(nextSession);
-      return profile;
+      return nextSession.user;
     } finally {
       setIsBootstrapping(false);
     }

@@ -5,16 +5,17 @@ import { PreferencesPanel } from "../preferences/PreferencesPanel";
 export function ProfileMenu() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const email = user?.email || "Cuenta";
+  const tenantName = user?.tenant_name || "Organización";
+  const initial = (user?.email || "C").slice(0, 1).toUpperCase();
 
   return (
     <details className="profile-menu">
       <summary>
-        <span className="profile-avatar">
-          {(user?.sub || user?.email || "A").slice(0, 1).toUpperCase()}
-        </span>
+        <span className="profile-avatar">{initial}</span>
         <span>
-          <strong>{user?.sub || "Cuenta"}</strong>
-          <small>{user?.tenant_id || "tenant"}</small>
+          <strong>{email}</strong>
+          <small>{tenantName}</small>
         </span>
       </summary>
       <div className="profile-popover">
