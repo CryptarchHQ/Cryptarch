@@ -13,7 +13,7 @@ export const groupsRoutes = [
             to="/admin/groups/permissions/new"
             className="permissions-assistant-link"
           >
-            Asistente de permisos
+            Crear con asistente
           </Link>
         }
       />
