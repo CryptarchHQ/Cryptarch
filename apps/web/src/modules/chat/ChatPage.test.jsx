@@ -13,20 +13,31 @@ function mockJsonResponse(status, payload) {
   });
 }
 
-function seedSession() {
+function seedSession(role = "user") {
   localStorage.setItem(
     SESSION_STORAGE_KEY,
     JSON.stringify({
-      token: "token-user",
+      token: role === "admin" ? "token-admin" : "token-user",
       user: {
-        email: "user@test",
+        email: role === "admin" ? "admin@test" : "user@test",
         tenant_name: "Acme",
-        sub: "user@test",
+        sub: role === "admin" ? "admin@test" : "user@test",
         tenant_id: "t1",
-        role: "user",
+        role,
       },
     }),
   );
+}
+
+function mockEmptyActionsFetch() {
+  fetch.mockImplementation((url) => {
+    const path = String(url).replace("http://localhost:8000", "");
+    if (path === "/me/preferences") {
+      return mockJsonResponse(200, { theme: "system", metadata: {} });
+    }
+    if (path === "/actions") return mockJsonResponse(200, []);
+    return mockJsonResponse(500, { detail: path });
+  });
 }
 
 function renderChatPage() {
@@ -50,16 +61,8 @@ describe("ChatPage", () => {
     vi.useRealTimers();
   });
 
-  it("lista vacía muestra la frase del administrador", async () => {
-    fetch.mockImplementation((url) => {
-      const path = String(url).replace("http://localhost:8000", "");
-      if (path === "/me/preferences") {
-        return mockJsonResponse(200, { theme: "system", metadata: {} });
-      }
-      if (path === "/actions") return mockJsonResponse(200, []);
-      return mockJsonResponse(500, { detail: path });
-    });
-
+  it("lista vacía (usuario) muestra Habla con tu administrador", async () => {
+    mockEmptyActionsFetch();
     renderChatPage();
 
     expect(
@@ -67,6 +70,21 @@ describe("ChatPage", () => {
         "Tu espacio aún no tiene acciones disponibles. Habla con tu administrador.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("lista vacía (admin) explica grupos y no pide hablar con el administrador", async () => {
+    seedSession("admin");
+    mockEmptyActionsFetch();
+    renderChatPage();
+
+    expect(
+      await screen.findByText(
+        "Tu espacio aún no tiene acciones disponibles. Tu usuario no coincide con ningún grupo; puedes revisarlo en Etiquetas y Grupos.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Habla con tu administrador.", { exact: false }),
+    ).not.toBeInTheDocument();
   });
 
   it("una acción Demo se ve como tarjeta y al pulsarla aparece el formulario", async () => {
