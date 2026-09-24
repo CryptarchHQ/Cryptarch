@@ -63,7 +63,6 @@ describe("UsersPage", () => {
         ]);
       }
       if (path === "/admin/tags") return mockJsonResponse(200, []);
-      if (path === "/admin/filters") return mockJsonResponse(200, []);
       return mockJsonResponse(500, { detail: path });
     });
 
@@ -90,7 +89,6 @@ describe("UsersPage", () => {
         ]);
       }
       if (path === "/admin/tags") return mockJsonResponse(200, []);
-      if (path === "/admin/filters") return mockJsonResponse(200, []);
       return mockJsonResponse(500, { detail: path });
     });
 
@@ -131,7 +129,6 @@ describe("UsersPage", () => {
         ]);
       }
       if (path === "/admin/tags") return mockJsonResponse(200, []);
-      if (path === "/admin/filters") return mockJsonResponse(200, []);
       return mockJsonResponse(500, { detail: path });
     });
 
@@ -146,5 +143,43 @@ describe("UsersPage", () => {
     const selfRow = screen.getByText("yo@acme.test").closest("tr");
     expect(selfRow).toBeTruthy();
     expect(selfRow.textContent).not.toMatch(/Eliminar/);
+  });
+
+  it("muestra chips de etiquetas y no el botón Guardar como filtro", async () => {
+    fetch.mockImplementation((url) => {
+      const path = String(url).replace("http://localhost:8000", "");
+      if (path === "/admin/users") {
+        return mockJsonResponse(200, [
+          {
+            id: OTHER_ID,
+            email: "ana@acme.test",
+            role: "user",
+            tag_ids: ["tag-vip"],
+          },
+        ]);
+      }
+      if (path === "/admin/tags") {
+        return mockJsonResponse(200, [{ id: "tag-vip", name: "VIP" }]);
+      }
+      return mockJsonResponse(500, { detail: path });
+    });
+
+    renderUsersPage();
+
+    expect(await screen.findByText("ana@acme.test")).toBeInTheDocument();
+
+    const tagChip = screen.getByRole("button", { name: "VIP" });
+    expect(tagChip).toBeInTheDocument();
+    expect(tagChip).toHaveAttribute("aria-pressed", "false");
+
+    expect(
+      screen.queryByRole("button", { name: "Guardar como filtro" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Nombre del filtro"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Filtros guardados" }),
+    ).not.toBeInTheDocument();
   });
 });
