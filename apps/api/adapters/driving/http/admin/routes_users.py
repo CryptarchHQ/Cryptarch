@@ -33,9 +33,7 @@ def list_users(
     """List users of the current tenant. Response includes tag_ids."""
     repo = UserRepositoryImpl(db)
     users = user_use_cases.list_users(current_user.tenant_id, repo)
-    return [
-        user_to_response(u, tag_ids=repo.get_user_tag_ids(u.id)) for u in users
-    ]
+    return [user_to_response(u, tag_ids=repo.get_user_tag_ids(u.id)) for u in users]
 
 
 @router.get("/users/{user_id}")
