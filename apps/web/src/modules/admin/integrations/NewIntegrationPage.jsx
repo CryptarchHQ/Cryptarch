@@ -4,19 +4,42 @@ import { api } from "../../../shared/apiClient";
 import { Toast } from "../../../shared/primitives";
 import { normalizeList } from "../adminHelpers";
 import { ActionStep, toRequestConfig } from "./ActionStep";
+import { ConnectionTestStep } from "./ConnectionTestStep";
 import {
   FieldsStep,
   buildInputSchema,
   hasDuplicateTechnicalNames,
 } from "./FieldsStep";
 import { IntegrationServiceForm } from "./IntegrationServiceForm";
+import { OAuthReviewStep } from "./OAuthReviewStep";
 import { WizardShell } from "./WizardShell";
 
-const WIZARD_STEPS = [
+const BASE_WIZARD_STEPS = [
   { id: "service", label: "Servicio" },
   { id: "action", label: "Acción" },
   { id: "fields", label: "Campos" },
 ];
+
+const OAUTH_EXTRA_STEPS = [
+  { id: "oauth-review", label: "Revisar acceso" },
+  { id: "connection-test", label: "Probar conexión" },
+];
+
+/**
+ * Pasos del wizard según el tipo de auth_config.
+ * Exportada para tests unitarios sin montar la página.
+ */
+export function wizardStepsFor(authConfig) {
+  if (
+    authConfig &&
+    typeof authConfig === "object" &&
+    !Array.isArray(authConfig) &&
+    authConfig.type === "oauth2"
+  ) {
+    return [...BASE_WIZARD_STEPS, ...OAUTH_EXTRA_STEPS];
+  }
+  return [...BASE_WIZARD_STEPS];
+}
 
 const EMPTY_DRAFT = {
   service: {
@@ -53,6 +76,13 @@ export function isStepValid(stepIndex, draft) {
   }
   if (stepIndex === 2) {
     return !hasDuplicateTechnicalNames(draft?.fields?.items);
+  }
+  if (stepIndex === 3) {
+    return true;
+  }
+  if (stepIndex === 4) {
+    const result = draft?.service?.connectionTest;
+    return result != null && typeof result.ok === "boolean";
   }
   return true;
 }
@@ -98,11 +128,11 @@ export async function createIntegration({
   return { connectorId: resolvedConnectorId };
 }
 
-function resolveInitialStep(connectorId, stepParam) {
+function resolveInitialStep(connectorId, stepParam, maxStepIndex) {
   if (stepParam != null && String(stepParam).trim() !== "") {
     const human = Number(stepParam);
     if (Number.isFinite(human) && human >= 1) {
-      return Math.max(0, Math.min(WIZARD_STEPS.length - 1, human - 1));
+      return Math.max(0, Math.min(maxStepIndex, human - 1));
     }
   }
   return connectorId ? 1 : 0;
@@ -113,12 +143,9 @@ export function NewIntegrationPage() {
   const navigate = useNavigate();
   const connectorId = searchParams.get("connectorId") || null;
   const stepParam = searchParams.get("step");
-  const initialStep = useMemo(
-    () => resolveInitialStep(connectorId, stepParam),
-    [connectorId, stepParam],
-  );
 
   const [draft, setDraft] = useState(EMPTY_DRAFT);
+  const [savedConnectorId, setSavedConnectorId] = useState(connectorId);
   const [tagOptions, setTagOptions] = useState([]);
   const [loadingConnector, setLoadingConnector] = useState(
     Boolean(connectorId),
@@ -127,6 +154,16 @@ export function NewIntegrationPage() {
   const [createError, setCreateError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
+
+  const steps = useMemo(
+    () => wizardStepsFor(draft?.service?.auth_config),
+    [draft?.service?.auth_config],
+  );
+
+  const initialStep = useMemo(
+    () => resolveInitialStep(connectorId, stepParam, steps.length - 1),
+    [connectorId, stepParam, steps.length],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -167,6 +204,7 @@ export function NewIntegrationPage() {
                 : connector.auth_config,
           },
         }));
+        setSavedConnectorId(connectorId);
       } catch (err) {
         if (!cancelled) {
           setLoadError(err?.message || "No se pudo cargar el conector");
@@ -195,7 +233,7 @@ export function NewIntegrationPage() {
       try {
         const result = await createIntegration({
           draft: finalDraft,
-          connectorId,
+          connectorId: savedConnectorId || connectorId,
           apiClient: api,
         });
         const href = `/admin/integrations/${result.connectorId}`;
@@ -211,7 +249,7 @@ export function NewIntegrationPage() {
         setSubmitting(false);
       }
     },
-    [connectorId, navigate, submitting],
+    [connectorId, navigate, savedConnectorId, submitting],
   );
 
   if (loadingConnector) {
@@ -244,7 +282,7 @@ export function NewIntegrationPage() {
         />
       ) : null}
       <WizardShell
-        steps={WIZARD_STEPS}
+        steps={steps}
         initialStep={initialStep}
         draft={draft}
         onDraftChange={setDraft}
@@ -272,13 +310,30 @@ export function NewIntegrationPage() {
               />
             );
           }
+          if (stepIndex === 2) {
+            return (
+              <FieldsStep
+                value={stepDraft.fields}
+                onChange={(fields) => setSlice("fields", fields)}
+                tagOptions={tagOptions}
+                onCreateTag={handleCreateTag}
+                createError={createError}
+              />
+            );
+          }
+          if (stepIndex === 3) {
+            return (
+              <OAuthReviewStep authConfig={stepDraft.service?.auth_config} />
+            );
+          }
           return (
-            <FieldsStep
-              value={stepDraft.fields}
-              onChange={(fields) => setSlice("fields", fields)}
-              tagOptions={tagOptions}
-              onCreateTag={handleCreateTag}
-              createError={createError}
+            <ConnectionTestStep
+              service={stepDraft.service}
+              connectorId={savedConnectorId || connectorId}
+              onConnectorCreated={setSavedConnectorId}
+              onTestResult={(connectionTest) =>
+                setSlice("service", { connectionTest })
+              }
             />
           );
         }}
