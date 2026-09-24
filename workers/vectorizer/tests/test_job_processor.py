@@ -34,7 +34,9 @@ def _job(document_id: str, file_path: str, tenant_id: str = "tenant-1") -> dict:
     }
 
 
-def test_txt_with_text_ends_indexed_and_passes_through_processing(tmp_path: Path) -> None:
+def test_txt_with_text_ends_indexed_and_passes_through_processing(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / "doc.txt"
     path.write_text("hola mundo", encoding="utf-8")
     store = FakeStatusStore()

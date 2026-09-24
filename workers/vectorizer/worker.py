@@ -53,7 +53,9 @@ def main() -> None:
         r.ping()
         print("Worker ready — connected to Redis", flush=True)
     except redis.ConnectionError:
-        print("Worker ready — Redis not yet available, will retry via BLPOP", flush=True)
+        print(
+            "Worker ready — Redis not yet available, will retry via BLPOP", flush=True
+        )
         r = redis.from_url(redis_url)
 
     status_store = PostgresStatusStore(database_url)

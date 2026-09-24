@@ -265,9 +265,10 @@ def test_retry_from_error_requeues_without_new_document(
     assert data["file_path"] == file_path
     assert data["original_filename"] == "existing.txt"
     assert data["uploaded_at"] is not None
-    assert datetime.fromisoformat(
-        data["uploaded_at"].replace("Z", "+00:00")
-    ) == uploaded_at
+    assert (
+        datetime.fromisoformat(data["uploaded_at"].replace("Z", "+00:00"))
+        == uploaded_at
+    )
 
     after_count = (
         db_session.query(Document).filter(Document.tenant_id == tenant.id).count()
