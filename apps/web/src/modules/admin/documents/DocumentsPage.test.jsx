@@ -54,7 +54,7 @@ describe("DocumentsPage", () => {
     global.fetch = vi.fn();
   });
 
-  it("muestra el basename y Listo, no el id del documento indexed", async () => {
+  it("sin original_filename muestra el basename y no el id", async () => {
     fetch.mockImplementation((url) => {
       const path = String(url).replace("http://localhost:8000", "");
       if (path === "/admin/documents") {
@@ -64,6 +64,8 @@ describe("DocumentsPage", () => {
             tenant_id: "t1",
             status: "indexed",
             file_path: "/storage/tenant/informe.pdf",
+            original_filename: null,
+            uploaded_at: null,
             tag_ids: [],
           },
         ]);
@@ -78,7 +80,44 @@ describe("DocumentsPage", () => {
     const row = screen.getByText("informe.pdf").closest("tr");
     expect(row).toBeTruthy();
     expect(within(row).getByText("Listo")).toBeInTheDocument();
+    expect(within(row).getByText("—")).toBeInTheDocument();
     expect(screen.queryByText(DOC_ID)).not.toBeInTheDocument();
+  });
+
+  it("muestra original_filename y uploaded_at formateado", async () => {
+    const uploadedAt = "2024-03-15T10:30:00.000Z";
+    const expectedDate = new Date(uploadedAt).toLocaleDateString("es-ES", {
+      day: "numeric",
+      month: "short",
+    });
+
+    fetch.mockImplementation((url) => {
+      const path = String(url).replace("http://localhost:8000", "");
+      if (path === "/admin/documents") {
+        return mockJsonResponse(200, [
+          {
+            id: DOC_ID,
+            tenant_id: "t1",
+            status: "indexed",
+            file_path: "/storage/tenant/uuid-abc-123.pdf",
+            original_filename: "informe.pdf",
+            uploaded_at: uploadedAt,
+            tag_ids: [],
+          },
+        ]);
+      }
+      if (path === "/admin/tags") return mockJsonResponse(200, []);
+      return mockJsonResponse(500, { detail: path });
+    });
+
+    renderDocumentsPage();
+
+    expect(await screen.findByText("informe.pdf")).toBeInTheDocument();
+    const row = screen.getByText("informe.pdf").closest("tr");
+    expect(row).toBeTruthy();
+    expect(within(row).getByText(expectedDate)).toBeInTheDocument();
+    expect(within(row).queryByText("—")).not.toBeInTheDocument();
+    expect(screen.queryByText("uuid-abc-123.pdf")).not.toBeInTheDocument();
   });
 
   it("status error muestra Error y Reintentar al expandir", async () => {
