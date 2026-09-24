@@ -1,5 +1,3 @@
-import { AdminResourcePage } from "../AdminResourcePage";
+import { GroupsPage } from "./GroupsPage";
 
-export const groupsRoutes = [
-  { path: "groups", element: <AdminResourcePage resource="groups" /> },
-];
+export const groupsRoutes = [{ path: "groups", element: <GroupsPage /> }];
