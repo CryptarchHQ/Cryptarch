@@ -67,3 +67,79 @@ jobs:
 
       - name: Ruff check
         run: pip install ruff==0.8.4 && ruff check apps/api workers/vectorizer
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Unit tests
+        working-directory: apps/web
+        run: npm test
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+
+      - name: Start infra (postgres redis qdrant)
+        run: docker compose -f infra/docker-compose.dev.yml up -d postgres redis qdrant
+
+      - name: Wait for postgres
+        run: |
+          for i in $(seq 1 60); do
+            if docker compose -f infra/docker-compose.dev.yml exec -T postgres pg_isready -U postgres; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "postgres did not become ready in time"
+          exit 1
+
+      - name: Run migrations
+        run: |
+          docker compose -f infra/docker-compose.dev.yml run --rm api sh -c "pip install -r requirements.txt && alembic upgrade head"
+
+      - name: Start API
+        run: docker compose -f infra/docker-compose.dev.yml up -d api
+
+      - name: Wait for API health
+        run: |
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:8000/health; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "API health check failed"
+          docker compose -f infra/docker-compose.dev.yml logs api || true
+          exit 1
+
+      - name: Playwright e2e
+        working-directory: apps/web
+        run: npx playwright test

@@ -1,32 +1,23 @@
 import { test, expect } from "@playwright/test";
-
-const DEV_TENANT = "00000000-0000-4000-8000-000000000001";
-const DEV_EMAIL = "admin@dev.local";
-const DEV_PASSWORD = "admin";
-
-async function devLogin(page) {
-  await page.goto("/login");
-  await page.getByLabel("Tenant ID").fill(DEV_TENANT);
-  await page.getByLabel("Email").fill(DEV_EMAIL);
-  await page.getByLabel("Password").fill(DEV_PASSWORD);
-  await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page).toHaveURL(/\/admin\/users/);
-}
+import { devLogin } from "./helpers.js";
 
 test("admin login reaches users workspace", async ({ page }) => {
   await devLogin(page);
   await expect(page.getByRole("heading", { name: "Usuarios" })).toBeVisible();
 });
 
-test("admin navigates to connectors", async ({ page }) => {
+test("admin navigates to integrations", async ({ page }) => {
   await devLogin(page);
-  await page.getByRole("link", { name: /Conectores/i }).click();
-  await expect(page).toHaveURL(/\/admin\/connectors/);
+  await page.getByRole("link", { name: "Integraciones" }).click();
+  await expect(page).toHaveURL(/\/admin\/integrations/);
+  await expect(
+    page.getByRole("heading", { name: "Integraciones" }),
+  ).toBeVisible();
 });
 
 test("chat assistant page loads after login", async ({ page }) => {
   await devLogin(page);
-  await page.getByRole("link", { name: /Chat/i }).click();
+  await page.getByRole("link", { name: "Chat" }).click();
   await expect(page).toHaveURL(/\/chat/);
   await expect(page.getByRole("heading", { name: "Asistente" })).toBeVisible();
 });
