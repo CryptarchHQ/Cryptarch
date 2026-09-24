@@ -5,6 +5,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "../app/AuthProvider";
 import { appRoutes } from "../app/router";
 
+function fakeJwt(claims) {
+  const header = btoa(JSON.stringify({ alg: "none", typ: "JWT" }));
+  const payload = btoa(JSON.stringify(claims));
+  return `${header}.${payload}.sig`;
+}
+
 function renderWithRoute(route) {
   const router = createMemoryRouter(appRoutes, { initialEntries: [route] });
   return render(
@@ -50,15 +56,16 @@ describe("smoke routes", () => {
     fetch
       .mockImplementationOnce(() =>
         mockJsonResponse(200, {
-          access_token: "token-demo",
+          access_token: fakeJwt({ tenant_id: "t1", role: "admin" }),
           token_type: "bearer",
         }),
       )
       .mockImplementationOnce(() =>
         mockJsonResponse(200, {
-          sub: "admin@test",
-          tenant_id: "t1",
+          email: "admin@test",
+          tenant_name: "Acme",
           role: "admin",
+          sub: "uuid-no-visible",
         }),
       )
       .mockImplementationOnce(() => mockJsonResponse(200, []))
@@ -86,6 +93,7 @@ describe("smoke routes", () => {
         screen.getByRole("heading", { name: "Usuarios" }),
       ).toBeInTheDocument();
     });
+    expect(screen.queryByText("uuid-no-visible")).not.toBeInTheDocument();
   });
 
   it("renderiza chat para usuario autenticado", async () => {
@@ -93,7 +101,13 @@ describe("smoke routes", () => {
       SESSION_STORAGE_KEY,
       JSON.stringify({
         token: "token-user",
-        user: { sub: "user@test", tenant_id: "t1", role: "user" },
+        user: {
+          email: "user@test",
+          tenant_name: "Acme",
+          sub: "user@test",
+          tenant_id: "t1",
+          role: "user",
+        },
       }),
     );
     fetch.mockImplementation((url, options = {}) => {
@@ -138,12 +152,23 @@ describe("smoke routes", () => {
       SESSION_STORAGE_KEY,
       JSON.stringify({
         token: "token-admin",
-        user: { sub: "admin@test", tenant_id: "t1", role: "admin" },
+        user: {
+          email: "admin@test",
+          tenant_name: "Acme",
+          sub: "admin@test",
+          tenant_id: "t1",
+          role: "admin",
+        },
       }),
     );
     mockByPath({
       "GET /admin/connectors": [
-        { id: "c1", base_url: "https://crm.api", auth_config: {} },
+        {
+          id: "c1",
+          name: "CRM",
+          base_url: "https://crm.api",
+          auth_config: {},
+        },
       ],
       "GET /admin/actions": [
         {
@@ -159,20 +184,26 @@ describe("smoke routes", () => {
 
     renderWithRoute("/admin/connectors");
     expect(
-      await screen.findByRole("heading", { name: "Conector y acciones" }),
+      await screen.findByRole("heading", { name: "Integraciones" }),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText("Connector id")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Crear acción" }),
+      screen.getByRole("link", { name: "Nueva integración" }),
     ).toBeInTheDocument();
   });
 
-  it("permite crear tags inline desde users workspace", async () => {
+  it("permite crear tags inline desde el drawer de usuarios", async () => {
     localStorage.setItem(
       SESSION_STORAGE_KEY,
       JSON.stringify({
         token: "token-admin",
-        user: { sub: "admin@test", tenant_id: "t1", role: "admin" },
+        user: {
+          email: "admin@test",
+          tenant_name: "Acme",
+          sub: "admin@test",
+          tenant_id: "t1",
+          role: "admin",
+        },
       }),
     );
     fetch.mockImplementation((url, options = {}) => {
@@ -193,10 +224,15 @@ describe("smoke routes", () => {
     expect(
       await screen.findByRole("heading", { name: "Usuarios" }),
     ).toBeInTheDocument();
-    fireEvent.change(screen.getAllByPlaceholderText("Nueva tag")[0], {
-      target: { value: "vip" },
-    });
-    fireEvent.click(screen.getAllByRole("button", { name: "Crear tag" })[0]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nuevo usuario" }));
+    expect(
+      await screen.findByRole("heading", { name: "Nuevo usuario" }),
+    ).toBeInTheDocument();
+
+    const tagInput = screen.getByRole("textbox", { name: "Nueva etiqueta" });
+    fireEvent.change(tagInput, { target: { value: "vip" } });
+    fireEvent.keyDown(tagInput, { key: "Enter" });
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(

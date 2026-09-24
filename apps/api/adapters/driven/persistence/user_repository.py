@@ -4,8 +4,8 @@ from core.domain.models import User
 from core.ports.user_repository import UserRepository
 from sqlalchemy.orm import Session
 
-from adapters.driven.persistence.models import UserOrm
-from adapters.driven.persistence.uuid_utils import normalize_uuid, parse_uuid
+from adapters.driven.persistence.models import UserOrm, UserTagOrm
+from adapters.driven.persistence.uuid_utils import normalize_uuid, parse_uuid, to_hex
 
 
 def _orm_to_domain(orm: UserOrm) -> User:
@@ -65,7 +65,24 @@ class UserRepositoryImpl(UserRepository):
         )
         return _orm_to_domain(orm) if orm else None
 
-    def add(self, user: User) -> User:
+    def get_user_tag_ids(self, user_id: str) -> list[str]:
+        """Return tag_ids for the user as canonical UUID strings."""
+        uid = parse_uuid(user_id)
+        if uid is None:
+            return []
+        u_hex, u_canonical = uid.hex, str(uid)
+        rows = (
+            self._session.query(UserTagOrm.tag_id)
+            .filter(UserTagOrm.user_id.in_([u_hex, u_canonical]))
+            .all()
+        )
+        result = []
+        for (tag_id,) in rows:
+            u = parse_uuid(tag_id) if tag_id else None
+            result.append(str(u) if u else str(tag_id))
+        return result
+
+    def add(self, user: User, tag_ids: list[str] | None = None) -> User:
         orm = UserOrm(
             tenant_id=user.tenant_id,
             email=user.email,
@@ -74,10 +91,19 @@ class UserRepositoryImpl(UserRepository):
         )
         self._session.add(orm)
         self._session.flush()
+        if tag_ids:
+            for tag_id in tag_ids:
+                self._session.add(
+                    UserTagOrm(
+                        user_id=orm.id,
+                        tag_id=to_hex(tag_id),
+                    )
+                )
+            self._session.flush()
         self._session.refresh(orm)
         return _orm_to_domain(orm)
 
-    def save(self, user: User) -> User:
+    def save(self, user: User, tag_ids: list[str] | None = None) -> User:
         uid = parse_uuid(user.id)
         if uid is None:
             return user
@@ -90,6 +116,17 @@ class UserRepositoryImpl(UserRepository):
         )
         if not orm:
             return user
+        if tag_ids is not None:
+            self._session.query(UserTagOrm).filter(
+                UserTagOrm.user_id == orm.id
+            ).delete()
+            for tag_id in tag_ids:
+                self._session.add(
+                    UserTagOrm(
+                        user_id=orm.id,
+                        tag_id=to_hex(tag_id),
+                    )
+                )
         orm.email = user.email
         orm.role = user.role
         orm.password_hash = user.password_hash
@@ -109,4 +146,7 @@ class UserRepositoryImpl(UserRepository):
             .first()
         )
         if orm is not None:
+            self._session.query(UserTagOrm).filter(
+                UserTagOrm.user_id == orm.id
+            ).delete()
             self._session.delete(orm)

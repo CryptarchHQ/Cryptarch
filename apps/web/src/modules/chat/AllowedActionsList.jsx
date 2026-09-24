@@ -18,31 +18,29 @@ function schemaDescription(action) {
 
 export function AllowedActionsList({ actions, selectedId, onSelect }) {
   return (
-    <div className="connector-list" role="list">
+    <div className="chat-actions" role="list">
       {actions.map((action) => {
         const id = action.id;
         const selected = id === selectedId;
         const meta = formatActionMeta(action);
         const description = schemaDescription(action);
+        const name = action.name?.trim() || "Acción sin nombre";
         return (
-          <button
-            key={id}
-            type="button"
-            role="listitem"
-            className={`connector-card panel subtle${selected ? " selected" : ""}`}
-            onClick={() => onSelect(action)}
-            style={{ cursor: "pointer", border: "1px solid #e5e7ef" }}
-          >
-            <strong style={{ fontSize: 14 }}>
-              {action.name?.trim() || "Acción sin nombre"}
-            </strong>
-            {meta ? <span className="allowed-action-meta">{meta}</span> : null}
-            {description ? (
-              <span className="text-sm muted" style={{ lineHeight: 1.35 }}>
-                {description}
-              </span>
-            ) : null}
-          </button>
+          <div key={id} role="listitem">
+            <button
+              type="button"
+              className={`chat-actions__card${selected ? " chat-actions__card--selected" : ""}`}
+              onClick={() => onSelect(action)}
+              aria-pressed={selected}
+              aria-label={name}
+            >
+              <span className="chat-actions__name">{name}</span>
+              {meta ? <span className="chat-actions__meta">{meta}</span> : null}
+              {description ? (
+                <span className="chat-actions__desc">{description}</span>
+              ) : null}
+            </button>
+          </div>
         );
       })}
     </div>

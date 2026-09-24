@@ -14,9 +14,24 @@ export default [
     ignores: ["dist", "node_modules", "coverage"],
   },
   {
-    files: ["eslint.config.js", "vite.config.js", "playwright.config.js"],
+    files: [
+      "eslint.config.js",
+      "vite.config.js",
+      "playwright.config.js",
+    ],
     languageOptions: {
       globals: globals.node,
+      ecmaVersion: "latest",
+      sourceType: "module",
+    },
+  },
+  {
+    files: ["e2e/**/*.js"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
       ecmaVersion: "latest",
       sourceType: "module",
     },

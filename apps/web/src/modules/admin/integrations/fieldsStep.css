@@ -1,0 +1,136 @@
+.fields-step {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  color: var(--text);
+}
+
+.fields-step__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fields-step__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-surface);
+  background: var(--surfaceSoft);
+}
+
+.fields-step__row-main {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+@media (max-width: 720px) {
+  .fields-step__row-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fields-step__row input,
+.fields-step__row select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.fields-step__check {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  padding-bottom: 0.35rem;
+}
+
+.fields-step__check input {
+  width: auto;
+}
+
+.fields-step__remove {
+  align-self: end;
+  margin-bottom: 0.1rem;
+}
+
+.fields-step__error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--danger, var(--error, var(--text)));
+}
+
+.fields-step__tech {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: 0.35rem 0.6rem;
+}
+
+.fields-step__tech > summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  list-style: none;
+}
+
+.fields-step__tech > summary::-webkit-details-marker {
+  display: none;
+}
+
+.fields-step__tech-body {
+  margin-top: 0.5rem;
+}
+
+.fields-step__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.fields-step__tags {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fields-step__tags-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.fields-step__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-surface);
+  background: var(--surface);
+}
+
+.fields-step__preview-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.fields-step__empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted, var(--text));
+}
+
+.fields-step__create-error {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--danger, var(--error, var(--text)));
+}

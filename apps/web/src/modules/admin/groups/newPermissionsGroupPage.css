@@ -1,0 +1,90 @@
+.new-permissions-group-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--text);
+}
+
+/* WizardShell resume como «Servicio»/«Campos»; no aplica a grupos de permisos. */
+.new-permissions-group-page .wizard-shell__summary {
+  display: none;
+}
+
+.new-permissions-group-page__error {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--danger, var(--error, var(--border)));
+  border-radius: var(--radius-control);
+  background: var(--surfaceSoft, var(--surface));
+  color: var(--danger, var(--error, var(--text)));
+}
+
+.new-permissions-group-page__step {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.new-permissions-group-page__step input[type="text"] {
+  width: 100%;
+  max-width: 28rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.permissions-assistant-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.permissions-assistant-link:hover {
+  border-color: var(--accent);
+  background: var(--accentSoft, var(--surfaceSoft, var(--surface)));
+}
+
+.permission-match-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-surface, var(--radius-control));
+  background: var(--surfaceSoft, var(--surface));
+}
+
+.permission-match-preview--empty,
+.permission-match-preview--loading {
+  margin: 0;
+  color: var(--muted, var(--text));
+}
+
+.permission-match-preview--error {
+  margin: 0;
+  color: var(--danger, var(--error, var(--text)));
+}
+
+.permission-match-preview__count {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.permission-match-preview__sample {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: var(--muted, var(--text));
+}
+
+.permission-match-preview__sample li {
+  margin: 0.15rem 0;
+}

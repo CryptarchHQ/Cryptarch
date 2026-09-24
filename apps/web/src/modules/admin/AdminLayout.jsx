@@ -9,7 +9,7 @@ const NAV_GROUPS = [
     label: "Trabajo",
     items: [
       { path: "users", label: "Usuarios", icon: "👥" },
-      { path: "connectors", label: "Conectores", icon: "🔌" },
+      { path: "integrations", label: "Integraciones", icon: "🔌" },
       { path: "documents", label: "Documentos", icon: "📚" },
     ],
   },
@@ -27,6 +27,7 @@ const NAV_GROUPS = [
 export function AdminLayout() {
   const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const tenantLabel = user?.tenant_name || "Organización";
 
   return (
     <div
@@ -44,7 +45,7 @@ export function AdminLayout() {
           </button>
           <div className="sidebar-brand">
             <h2>Cryptarch</h2>
-            <small className="muted">{user?.tenant_id}</small>
+            <small className="muted">{tenantLabel}</small>
           </div>
         </div>
         {NAV_GROUPS.map((group) => (
@@ -80,7 +81,7 @@ export function AdminLayout() {
         <header className="admin-topbar admin-topbar-compact">
           <div className="topbar-title">
             <strong>Admin</strong>
-            <small className="muted">{user?.tenant_id}</small>
+            <small className="muted">{tenantLabel}</small>
           </div>
           <ProfileMenu />
         </header>

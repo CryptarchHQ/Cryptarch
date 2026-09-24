@@ -48,7 +48,7 @@ function FieldControl({ field, value, onChange }) {
       );
     case "radio":
       return (
-        <div className="row">
+        <div className="chat-form__options">
           {options.map((opt) => {
             const optionValue = String(opt.value ?? opt);
             return (
@@ -118,33 +118,33 @@ export function DynamicActionForm({
 
   return (
     <form
-      className="stack"
+      className="chat-form"
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit();
       }}
     >
       {schemaVersion ? (
-        <p className="text-sm muted">Esquema v{schemaVersion}</p>
+        <p className="chat-form__version">Esquema v{schemaVersion}</p>
       ) : null}
       {fields.length === 0 ? (
-        <p className="text-sm muted">
+        <p className="chat-form__hint">
           Esta acción no define parámetros de entrada.
         </p>
       ) : null}
       {fields.map((field) => (
-        <label key={field.name} className="field">
-          <span>
+        <label key={field.name} className="chat-form__field">
+          <span className="chat-form__label">
             {field.label || field.name}
             {field.required ? (
-              <span className="muted" aria-hidden>
+              <span className="chat-form__hint" aria-hidden>
                 {" "}
                 *
               </span>
             ) : null}
           </span>
           {field.description ? (
-            <span className="text-sm muted">{field.description}</span>
+            <span className="chat-form__description">{field.description}</span>
           ) : null}
           <FieldControl
             field={field}
@@ -156,7 +156,11 @@ export function DynamicActionForm({
         </label>
       ))}
       <div>
-        <button className="primary" type="submit" disabled={submitting}>
+        <button
+          className="chat-form__submit"
+          type="submit"
+          disabled={submitting}
+        >
           {submitting ? "Ejecutando…" : submitLabel}
         </button>
       </div>
