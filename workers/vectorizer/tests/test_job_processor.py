@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import redis
 from pypdf import PdfWriter
 
 from job_processor import (
@@ -14,6 +15,7 @@ from job_processor import (
     process_job,
     process_raw_payload,
 )
+from worker import pop_job
 
 
 class FakeStatusStore:
@@ -150,3 +152,12 @@ def test_process_raw_payload_bytes_success(tmp_path: Path) -> None:
     process_raw_payload(raw, store)
 
     assert store.by_id[doc_id] == STATUS_INDEXED
+
+
+class _TimeoutRedis:
+    def blpop(self, queue_name, timeout):
+        raise redis.TimeoutError("Timeout reading from socket")
+
+
+def test_pop_job_treats_socket_timeout_as_empty_queue() -> None:
+    assert pop_job(_TimeoutRedis(), "cryptarch:document_jobs", 5) is None

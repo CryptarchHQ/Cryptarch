@@ -22,6 +22,14 @@ DOCUMENT_JOB_QUEUE_NAME = "cryptarch:document_jobs"
 BLPOP_TIMEOUT_SECONDS = 5
 
 
+def pop_job(redis_client: redis.Redis, queue_name: str, timeout: int):
+    """BLPOP one job. A client socket timeout means the queue was empty, not a crash."""
+    try:
+        return redis_client.blpop(queue_name, timeout=timeout)
+    except redis.TimeoutError:
+        return None
+
+
 def run_forever(
     redis_client: redis.Redis,
     status_store: PostgresStatusStore,
@@ -32,7 +40,7 @@ def run_forever(
     """Block on the job queue and process each payload. Never exits on job errors."""
     print("Worker ready — consuming", queue_name, flush=True)
     while True:
-        item = redis_client.blpop(queue_name, timeout=blpop_timeout)
+        item = pop_job(redis_client, queue_name, blpop_timeout)
         if item is None:
             continue
         _queue, raw = item
@@ -49,14 +57,14 @@ def main() -> None:
     )
 
     try:
-        r = redis.from_url(redis_url)
+        r = redis.from_url(redis_url, socket_timeout=None)
         r.ping()
         print("Worker ready — connected to Redis", flush=True)
     except redis.ConnectionError:
         print(
             "Worker ready — Redis not yet available, will retry via BLPOP", flush=True
         )
-        r = redis.from_url(redis_url)
+        r = redis.from_url(redis_url, socket_timeout=None)
 
     status_store = PostgresStatusStore(database_url)
     run_forever(r, status_store)
