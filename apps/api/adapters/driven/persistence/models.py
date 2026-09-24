@@ -6,7 +6,7 @@ These are the concrete database models. Domain entities live in
 
 import uuid
 
-from sqlalchemy import Column, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import declarative_base
 
@@ -145,6 +145,8 @@ class DocumentOrm(Base):
     )
     status = Column(String(32), nullable=False)  # queued | processing | indexed | error
     file_path = Column(String(2048), nullable=True)
+    original_filename = Column(String(512), nullable=True)
+    uploaded_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class DocumentTagOrm(Base):

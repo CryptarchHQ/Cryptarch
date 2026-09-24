@@ -5,6 +5,7 @@ Every entity is tenant-scoped.
 """
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 
@@ -91,6 +92,8 @@ class Document:
     tenant_id: str
     status: str  # queued | processing | indexed | error
     file_path: str | None = None
+    original_filename: str | None = None
+    uploaded_at: datetime | None = None
     id: str | None = None
 
 

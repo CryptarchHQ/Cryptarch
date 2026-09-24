@@ -184,6 +184,25 @@ def test_upload_pdf_creates_queued_document_and_enqueues_job(
     assert job["file_path"] == data["file_path"]
 
 
+def test_upload_persists_original_filename_and_uploaded_at(
+    client: TestClient,
+    tenant,
+    admin_user,
+):
+    """Upload stores client basename and a non-null UTC uploaded_at."""
+    r = client.post(
+        "/admin/documents/upload",
+        headers=_auth_headers(tenant.id, admin_user.id),
+        files={"file": ("informe.pdf", b"%PDF-1.4", "application/pdf")},
+    )
+    assert r.status_code == 201
+    data = r.json()
+    assert data["original_filename"] == "informe.pdf"
+    assert data["uploaded_at"] is not None
+    # ISO datetime parseable
+    datetime.fromisoformat(data["uploaded_at"].replace("Z", "+00:00"))
+
+
 @pytest.mark.parametrize(
     "filename,mime",
     [
@@ -220,11 +239,14 @@ def test_retry_from_error_requeues_without_new_document(
     """Retry on error: same document → queued + another job; document count unchanged."""
     file_path = str(upload_dir / "existing.txt")
     Path(file_path).write_text("body", encoding="utf-8")
+    uploaded_at = datetime(2024, 6, 15, 12, 0, 0, tzinfo=UTC)
     doc = Document(
         id=_id(),
         tenant_id=tenant.id,
         status="error",
         file_path=file_path,
+        original_filename="existing.txt",
+        uploaded_at=uploaded_at,
     )
     db_session.add(doc)
     db_session.flush()
@@ -241,6 +263,11 @@ def test_retry_from_error_requeues_without_new_document(
     assert data["status"] == "queued"
     assert uuid.UUID(data["id"]) == uuid.UUID(doc.id)
     assert data["file_path"] == file_path
+    assert data["original_filename"] == "existing.txt"
+    assert data["uploaded_at"] is not None
+    assert datetime.fromisoformat(
+        data["uploaded_at"].replace("Z", "+00:00")
+    ) == uploaded_at
 
     after_count = (
         db_session.query(Document).filter(Document.tenant_id == tenant.id).count()
