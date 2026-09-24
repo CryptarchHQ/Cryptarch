@@ -230,10 +230,9 @@ describe("smoke routes", () => {
       await screen.findByRole("heading", { name: "Nuevo usuario" }),
     ).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText("Nueva tag"), {
-      target: { value: "vip" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Crear tag" }));
+    const tagInput = screen.getByRole("textbox", { name: "Nueva etiqueta" });
+    fireEvent.change(tagInput, { target: { value: "vip" } });
+    fireEvent.keyDown(tagInput, { key: "Enter" });
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(

@@ -553,15 +553,25 @@ button.danger {
   background: var(--surface);
   border-radius: var(--radius-surface);
   padding: 8px;
-  gap: 6px;
+  cursor: text;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
-.tag-picker-selected {
+.tag-picker.focused {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.tag-picker-chips {
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
 }
 
-.tag-picker-selected .badge-selected {
+.tag-picker-chips .badge-selected {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -587,12 +597,7 @@ button.danger {
   opacity: 1;
 }
 
-.tag-picker-available {
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tag-picker-available .badge-available {
+.tag-picker-chips .badge-available {
   border: 1px dashed var(--border);
   background: var(--surfaceSoft);
   padding: 4px 10px;
@@ -601,37 +606,22 @@ button.danger {
   border-radius: var(--radius-control);
 }
 
-.tag-picker-available .badge-available:hover {
+.tag-picker-chips .badge-available:hover {
   background: var(--accentSoft);
 }
 
-.tag-picker-create {
-  align-items: center;
-  gap: 8px;
-}
-
-.tag-picker-create input {
-  flex: 1;
-  min-width: 120px;
-  max-width: 200px;
-}
-
-.tag-picker-create.focused input {
-  border-color: var(--accent);
-}
-
-.tag-picker.focused .tag-picker-create {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent);
-}
-
-.tag-picker-create {
-  padding: 6px 8px;
-  border-radius: var(--radius-surface);
-  border: 1px solid transparent;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
+.tag-picker .tag-picker-input {
+  flex: 1 1 7rem;
+  width: auto;
+  min-width: 6rem;
+  margin: 0;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  font: inherit;
+  color: inherit;
 }
 
 /* ActionBuilder guiado */

@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 export function TagPicker({ options, value, onChange, onCreateTag }) {
   const [draftName, setDraftName] = useState("");
   const [creating, setCreating] = useState(false);
   const [focused, setFocused] = useState(false);
+  const inputRef = useRef(null);
   const selected = useMemo(() => new Set(value || []), [value]);
   const normalizedOptions = useMemo(() => options || [], [options]);
 
@@ -58,87 +59,78 @@ export function TagPicker({ options, value, onChange, onCreateTag }) {
     return !selected.has(tagValue);
   });
 
-  const datalistId = useMemo(
-    () => `tag-picker-dl-${Math.random().toString(36).slice(2)}`,
-    [],
+  const selectedTags = normalizedOptions.filter((tag) =>
+    selected.has(tag.id ?? tag.name),
   );
+
+  const hasAnyChips = selectedTags.length > 0 || availableTags.length > 0;
+
+  const focusInput = () => {
+    inputRef.current?.focus();
+  };
+
+  const handlePickerClick = (event) => {
+    if (event.target.closest(".badge, .badge-remove, .tag-picker-input")) {
+      return;
+    }
+    focusInput();
+  };
 
   return (
     <div
-      className={`tag-picker stack dense${focused ? " focused" : ""}`}
+      className={`tag-picker${focused ? " focused" : ""}`}
       role="group"
       aria-label="Seleccionar o crear tags"
+      onClick={handlePickerClick}
     >
-      <div className="tag-picker-selected row">
-        {normalizedOptions
-          .filter((tag) => selected.has(tag.id ?? tag.name))
-          .map((tag) => {
-            const tagValue = tag.id ?? tag.name;
-            return (
-              <span key={tagValue} className="badge badge-selected">
-                {tag.name || tagValue}
-                <button
-                  type="button"
-                  className="badge-remove"
-                  onClick={() =>
-                    onChange((value || []).filter((id) => id !== tagValue))
-                  }
-                  aria-label={`Quitar ${tag.name || tagValue}`}
-                >
-                  ×
-                </button>
-              </span>
-            );
-          })}
-      </div>
-      {availableTags.length > 0 && (
-        <div className="tag-picker-available row">
-          {availableTags.slice(0, 12).map((tag) => {
-            const tagValue = tag.id ?? tag.name;
-            return (
+      <div className="tag-picker-chips">
+        {selectedTags.map((tag) => {
+          const tagValue = tag.id ?? tag.name;
+          return (
+            <span key={tagValue} className="badge badge-selected">
+              {tag.name || tagValue}
               <button
-                key={tagValue}
                 type="button"
-                className="badge badge-available"
-                onClick={() => handleAddExisting(tagValue)}
-                aria-label={`Añadir ${tag.name || tagValue}`}
+                className="badge-remove"
+                onClick={() =>
+                  onChange((value || []).filter((id) => id !== tagValue))
+                }
+                aria-label={`Quitar ${tag.name || tagValue}`}
               >
-                + {tag.name || tagValue}
+                ×
               </button>
-            );
-          })}
-        </div>
-      )}
-      {onCreateTag ? (
-        <div className={`tag-picker-create row${focused ? " focused" : ""}`}>
+            </span>
+          );
+        })}
+        {availableTags.slice(0, 12).map((tag) => {
+          const tagValue = tag.id ?? tag.name;
+          return (
+            <button
+              key={tagValue}
+              type="button"
+              className="badge badge-available"
+              onClick={() => handleAddExisting(tagValue)}
+              aria-label={`Añadir ${tag.name || tagValue}`}
+            >
+              + {tag.name || tagValue}
+            </button>
+          );
+        })}
+        {onCreateTag ? (
           <input
+            ref={inputRef}
+            className="tag-picker-input"
             value={draftName}
-            placeholder="Nueva tag"
+            placeholder={hasAnyChips ? "" : "Nueva etiqueta"}
             onChange={(event) => setDraftName(event.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            list={availableTags.length > 0 ? datalistId : undefined}
-            aria-label="Crear o seleccionar tag"
+            disabled={creating}
+            aria-label="Nueva etiqueta"
           />
-          {availableTags.length > 0 ? (
-            <datalist id={datalistId}>
-              {availableTags.map((tag) => (
-                <option key={tag.id ?? tag.name} value={tag.name || tag.id} />
-              ))}
-            </datalist>
-          ) : null}
-          <button
-            type="button"
-            onClick={handleCreate}
-            disabled={creating || !draftName.trim()}
-            className="primary"
-            aria-label="Crear tag"
-          >
-            {creating ? "Creando…" : "Crear tag"}
-          </button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }
