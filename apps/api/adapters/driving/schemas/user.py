@@ -23,16 +23,20 @@ class UserCreateBody(BaseModel):
     email: str
     role: UserRole
     password: str
+    tag_ids: list[uuid.UUID] = []
 
 
 class UserUpdateBody(BaseModel):
     email: str | None = None
     role: UserRole | None = None
     password: str | None = None
+    tag_ids: list[uuid.UUID] | None = None
 
 
-def user_to_response(user: User) -> dict:
+def user_to_response(user: User, tag_ids: list[str] | None = None) -> dict:
     """Serialize User to JSON. IDs in canonical form (with hyphens) for consistent API contract."""
+    if tag_ids is None:
+        tag_ids = []
     ui = _parse_uuid(str(user.id)) if user.id else None
     ti = _parse_uuid(str(user.tenant_id)) if user.tenant_id else None
     return {
@@ -40,4 +44,5 @@ def user_to_response(user: User) -> dict:
         "tenant_id": str(ti) if ti else str(user.tenant_id),
         "email": user.email,
         "role": user.role,
+        "tag_ids": tag_ids,
     }
