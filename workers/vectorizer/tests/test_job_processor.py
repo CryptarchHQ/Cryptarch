@@ -6,8 +6,6 @@ import json
 from pathlib import Path
 
 import redis
-from pypdf import PdfWriter
-
 from job_processor import (
     STATUS_ERROR,
     STATUS_INDEXED,
@@ -15,6 +13,7 @@ from job_processor import (
     process_job,
     process_raw_payload,
 )
+from pypdf import PdfWriter
 from worker import pop_job
 
 

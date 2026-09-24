@@ -14,7 +14,6 @@ import os
 import sys
 
 import redis
-
 from job_processor import process_raw_payload
 from status_store import PostgresStatusStore
 
