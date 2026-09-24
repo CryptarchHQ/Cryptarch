@@ -192,7 +192,7 @@ describe("smoke routes", () => {
     ).toBeInTheDocument();
   });
 
-  it("permite crear tags inline desde users workspace", async () => {
+  it("permite crear tags inline desde el drawer de usuarios", async () => {
     localStorage.setItem(
       SESSION_STORAGE_KEY,
       JSON.stringify({
@@ -224,10 +224,16 @@ describe("smoke routes", () => {
     expect(
       await screen.findByRole("heading", { name: "Usuarios" }),
     ).toBeInTheDocument();
-    fireEvent.change(screen.getAllByPlaceholderText("Nueva tag")[0], {
+
+    fireEvent.click(screen.getByRole("button", { name: "Nuevo usuario" }));
+    expect(
+      await screen.findByRole("heading", { name: "Nuevo usuario" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText("Nueva tag"), {
       target: { value: "vip" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: "Crear tag" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Crear tag" }));
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(

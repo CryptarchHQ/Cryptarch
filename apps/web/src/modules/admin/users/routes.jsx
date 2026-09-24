@@ -1,3 +1,3 @@
-import { UsersWorkspace } from "../UsersWorkspace";
+import { UsersPage } from "./UsersPage";
 
-export const usersRoutes = [{ path: "users", element: <UsersWorkspace /> }];
+export const usersRoutes = [{ path: "users", element: <UsersPage /> }];
