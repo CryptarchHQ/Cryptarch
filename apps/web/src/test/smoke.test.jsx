@@ -163,7 +163,12 @@ describe("smoke routes", () => {
     );
     mockByPath({
       "GET /admin/connectors": [
-        { id: "c1", base_url: "https://crm.api", auth_config: {} },
+        {
+          id: "c1",
+          name: "CRM",
+          base_url: "https://crm.api",
+          auth_config: {},
+        },
       ],
       "GET /admin/actions": [
         {
@@ -179,11 +184,11 @@ describe("smoke routes", () => {
 
     renderWithRoute("/admin/connectors");
     expect(
-      await screen.findByRole("heading", { name: "Conector y acciones" }),
+      await screen.findByRole("heading", { name: "Integraciones" }),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText("Connector id")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Crear acción" }),
+      screen.getByRole("link", { name: "Nueva integración" }),
     ).toBeInTheDocument();
   });
 
