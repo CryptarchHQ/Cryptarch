@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import { toJsonText } from "../admin/adminHelpers";
 
 function isStructuredResult(value) {
@@ -11,89 +10,47 @@ function isStructuredResult(value) {
 }
 
 export function ActionExecutionResult({ result }) {
-  const [showRaw, setShowRaw] = useState(false);
-  const structured = useMemo(() => isStructuredResult(result), [result]);
-
   if (result === null || result === undefined) return null;
 
+  const structured = isStructuredResult(result);
   const jsonText = toJsonText(result);
 
   return (
-    <div className="stack dense">
-      <div className="row spread">
-        <h3 style={{ margin: 0 }}>Resultado</h3>
-        <label className="check-row text-sm">
-          <input
-            type="checkbox"
-            checked={showRaw}
-            onChange={(e) => setShowRaw(e.target.checked)}
-          />
-          Ver JSON
-        </label>
-      </div>
+    <div className="chat-result">
+      <h3 className="chat-result__title">Resultado</h3>
 
-      {showRaw ? (
-        <pre
-          className="chat-result-json"
-          style={{
-            margin: 0,
-            padding: 12,
-            background: "#f4f6fb",
-            borderRadius: 8,
-            overflow: "auto",
-            fontSize: 13,
-          }}
-        >
-          {jsonText}
-        </pre>
-      ) : structured ? (
-        <div className="stack dense chat-result-structured">
+      {structured ? (
+        <>
           {Object.prototype.hasOwnProperty.call(result, "status") ? (
-            <div>
-              <strong className="text-sm">Estado</strong>
-              <div>{String(result.status)}</div>
+            <div className="chat-result__row">
+              <span className="chat-result__label">Estado</span>
+              <span className="chat-result__value">
+                {String(result.status)}
+              </span>
             </div>
           ) : null}
           {Object.prototype.hasOwnProperty.call(result, "message") ? (
-            <div>
-              <strong className="text-sm">Mensaje</strong>
-              <div>{String(result.message)}</div>
+            <div className="chat-result__row">
+              <span className="chat-result__label">Mensaje</span>
+              <span className="chat-result__value">
+                {String(result.message)}
+              </span>
             </div>
           ) : null}
-          {Object.prototype.hasOwnProperty.call(result, "data") ? (
-            <div>
-              <strong className="text-sm">Datos</strong>
-              <pre
-                style={{
-                  margin: "6px 0 0",
-                  padding: 10,
-                  background: "#f4f6fb",
-                  borderRadius: 8,
-                  overflow: "auto",
-                  fontSize: 13,
-                }}
-              >
-                {typeof result.data === "string"
-                  ? result.data
-                  : toJsonText(result.data)}
-              </pre>
-            </div>
-          ) : null}
-        </div>
+        </>
       ) : (
-        <pre
-          style={{
-            margin: 0,
-            padding: 12,
-            background: "#f4f6fb",
-            borderRadius: 8,
-            overflow: "auto",
-            fontSize: 13,
-          }}
-        >
-          {jsonText}
-        </pre>
+        <div className="chat-result__row">
+          <span className="chat-result__label">Mensaje</span>
+          <span className="chat-result__value">
+            {typeof result === "string" ? result : "Ejecución completada"}
+          </span>
+        </div>
       )}
+
+      <details className="chat-result__details">
+        <summary className="chat-result__summary">Ver detalle técnico</summary>
+        <pre className="chat-result__json">{jsonText}</pre>
+      </details>
     </div>
   );
 }

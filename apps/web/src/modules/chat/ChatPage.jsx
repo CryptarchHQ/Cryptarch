@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../app/AuthProvider";
 import { api } from "../../shared/apiClient";
-import { ApiErrorBanner, EmptyState, LoadingBlock } from "../../shared/ui";
+import { ApiErrorBanner, LoadingBlock } from "../../shared/ui";
 import { ProfileMenu } from "../admin/ProfileMenu";
 import { ActionExecutionResult } from "./ActionExecutionResult";
 import { AllowedActionsList } from "./AllowedActionsList";
@@ -11,20 +11,28 @@ import {
   buildExecutePayload,
   DynamicActionForm,
 } from "./DynamicActionForm";
+import "./chatPage.css";
+
+const SLOW_LOAD_MS = 8000;
+const EMPTY_ACTIONS_MESSAGE =
+  "Tu espacio aún no tiene acciones disponibles. Habla con tu administrador.";
+const SLOW_LOAD_MESSAGE = "Esto está tardando más de lo normal";
 
 export function ChatPage() {
   const [actions, setActions] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [slowLoad, setSlowLoad] = useState(false);
   const [selectedAction, setSelectedAction] = useState(null);
   const [payload, setPayload] = useState({});
   const [result, setResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const { user, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const loadActions = useCallback(async () => {
     setLoadingList(true);
+    setSlowLoad(false);
     setError(null);
     try {
       const data = await api.get("/actions");
@@ -40,6 +48,17 @@ export function ChatPage() {
   useEffect(() => {
     loadActions();
   }, [loadActions]);
+
+  useEffect(() => {
+    if (!loadingList) {
+      setSlowLoad(false);
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      setSlowLoad(true);
+    }, SLOW_LOAD_MS);
+    return () => window.clearTimeout(timer);
+  }, [loadingList]);
 
   function selectAction(action) {
     setSelectedAction(action);
@@ -80,19 +99,26 @@ export function ChatPage() {
     }
   }
 
+  const showEmpty = !loadingList && !error && actions.length === 0;
+  const showList = !loadingList && !error && actions.length > 0;
+
   return (
-    <div className="content">
-      <section className="panel">
-        <div className="page-header">
+    <div className="content chat-page">
+      <section className="chat-page__panel">
+        <div className="chat-page__header">
           <div>
-            <h1>Asistente</h1>
-            <small>
-              Usuario: {user?.sub} ({user?.role})
-            </small>
+            <h1 className="chat-page__title">Asistente</h1>
+            <p className="chat-page__lead">
+              Elige una acción para rellenar el formulario y ejecutarla.
+            </p>
           </div>
-          <div className="row page-header-actions">
+          <div className="chat-page__header-actions">
             {isAdmin ? (
-              <button type="button" onClick={() => navigate("/admin/users")}>
+              <button
+                type="button"
+                className="chat-page__admin-link"
+                onClick={() => navigate("/admin/users")}
+              >
                 Ir a admin
               </button>
             ) : null}
@@ -100,24 +126,37 @@ export function ChatPage() {
           </div>
         </div>
         <ApiErrorBanner error={error} />
-        <p className="text-sm muted" style={{ marginTop: 0 }}>
-          Elige una acción para rellenar el formulario y ejecutarla.
-        </p>
       </section>
 
-      {loadingList ? <LoadingBlock label="Cargando acciones…" /> : null}
-
-      {!loadingList && !error && actions.length === 0 ? (
-        <EmptyState
-          title="No hay acciones disponibles"
-          description="Cuando existan acciones en tu espacio, aparecerán aquí para ejecutarlas."
-        />
+      {loadingList ? (
+        <section className="chat-page__panel">
+          {slowLoad ? (
+            <div className="chat-page__slow">
+              <p className="chat-page__empty">{SLOW_LOAD_MESSAGE}</p>
+              <button
+                type="button"
+                className="chat-page__retry"
+                onClick={() => loadActions()}
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <LoadingBlock label="Cargando acciones…" />
+          )}
+        </section>
       ) : null}
 
-      {!loadingList && !error && actions.length > 0 ? (
-        <div className="chat-workspace">
-          <section className="panel">
-            <h2 style={{ marginTop: 0, fontSize: "1.05rem" }}>Acciones</h2>
+      {showEmpty ? (
+        <section className="chat-page__panel">
+          <p className="chat-page__empty">{EMPTY_ACTIONS_MESSAGE}</p>
+        </section>
+      ) : null}
+
+      {showList ? (
+        <div className="chat-page__workspace">
+          <section className="chat-page__panel">
+            <h2 className="chat-page__panel-title">Acciones</h2>
             <AllowedActionsList
               actions={actions}
               selectedId={selectedAction?.id}
@@ -125,10 +164,10 @@ export function ChatPage() {
             />
           </section>
 
-          <section className="panel">
+          <section className="chat-page__panel">
             {selectedAction ? (
               <>
-                <h2 style={{ marginTop: 0, fontSize: "1.15rem" }}>
+                <h2 className="chat-page__panel-title">
                   {selectedAction.name?.trim() || "Acción sin nombre"}
                 </h2>
                 <DynamicActionForm
@@ -143,10 +182,9 @@ export function ChatPage() {
                 <ActionExecutionResult result={result} />
               </>
             ) : (
-              <EmptyState
-                title="Selecciona una acción"
-                description="Pulsa una acción de la lista para ver el formulario y ejecutarla."
-              />
+              <p className="chat-page__empty">
+                Pulsa una acción para ver el formulario y ejecutarla.
+              </p>
             )}
           </section>
         </div>
