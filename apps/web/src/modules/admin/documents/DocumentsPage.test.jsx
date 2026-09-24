@@ -101,8 +101,12 @@ describe("DocumentsPage", () => {
 
     renderDocumentsPage();
 
-    expect(await screen.findByText("Error")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "roto.csv" }));
+    const fileButton = await screen.findByRole("button", { name: "roto.csv" });
+    const row = fileButton.closest("tr");
+    expect(row).toBeTruthy();
+    expect(within(row).getByText("Error")).toBeInTheDocument();
+
+    fireEvent.click(fileButton);
     expect(
       await screen.findByRole("button", { name: "Reintentar" }),
     ).toBeInTheDocument();

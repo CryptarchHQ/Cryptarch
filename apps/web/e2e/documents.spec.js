@@ -38,13 +38,14 @@ test("documents library: list, upload txt, reject exe", async ({ page }) => {
     ).toHaveCount(0);
     await expect(page.getByText("Arrastra documentos aquí")).toBeVisible();
 
+    const fileName = `e2e-${Date.now()}.txt`;
     await page.getByLabel("Seleccionar fichero").setInputFiles({
-      name: `e2e-${Date.now()}.txt`,
+      name: fileName,
       mimeType: "text/plain",
       buffer: Buffer.from("contenido e2e de prueba\n"),
     });
 
-    await expect(page.getByLabel("Título")).toHaveValue(/e2e-.*\.txt/);
+    await expect(page.getByLabel("Título")).toHaveValue(fileName);
 
     const uploadResponsePromise = page.waitForResponse(isDocumentsUploadPost);
     await page.getByRole("button", { name: "Confirmar" }).click();
@@ -59,9 +60,7 @@ test("documents library: list, upload txt, reject exe", async ({ page }) => {
     }
 
     await expect(
-      page
-        .getByText("Documento en cola")
-        .or(page.locator(".documents-page__status--queued")),
+      page.getByRole("status").filter({ hasText: "Documento en cola" }),
     ).toBeVisible();
 
     await page.getByLabel("Seleccionar fichero").setInputFiles({
