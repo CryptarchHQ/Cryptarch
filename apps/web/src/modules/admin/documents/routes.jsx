@@ -1,5 +1,5 @@
-import { DocumentsLibraryPage } from "../DocumentsLibraryPage";
+import { DocumentsPage } from "./DocumentsPage";
 
 export const documentsRoutes = [
-  { path: "documents", element: <DocumentsLibraryPage /> },
+  { path: "documents", element: <DocumentsPage /> },
 ];
